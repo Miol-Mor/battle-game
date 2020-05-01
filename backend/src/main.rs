@@ -14,3 +14,22 @@ fn rocket() -> rocket::Rocket {
 fn main() {
    rocket().launch();
 }
+
+#[cfg(test)]
+mod test {
+    use super::rocket;
+    use rocket::local::Client;
+    use rocket::http::Status;
+
+    #[test]
+    fn connect() {
+        let path = "/connect";
+        let response_msg = "I'm sorry Dave, I'm afraid I can't do that";
+
+        let client = Client::new(rocket()).expect("valid rocket instance");
+        let mut response = client.get(path).dispatch();
+
+        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(response.body_string(), Some(response_msg.into()));
+    }
+}
