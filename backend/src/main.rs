@@ -7,8 +7,16 @@ fn connect() -> &'static str {
    "I'm sorry Dave, I'm afraid I can't do that"
 }
 
+#[get("/")]
+fn main_page() -> &'static str {
+    "\t
+    Welcome to our first Rocket server.\n
+    You can go to http://localhost:8000/connect to see reference to Stanley Kubrick
+    "
+}
+
 fn rocket() -> rocket::Rocket {
-    rocket::ignite().mount("/", routes![connect])
+    rocket::ignite().mount("/", routes![connect, main_page])
 }
 
 fn main() {
