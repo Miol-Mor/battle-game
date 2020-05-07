@@ -22,4 +22,9 @@ function start() {
 
     //Add the canvas that Pixi automatically created for you to the HTML document
     document.body.appendChild(app.view); // app.view - canvas element
+
+    grid = new Hex_grid(app.stage, 8, 6, 50, 100, 100);
+    grid.draw();
+
+    grid.fill_hex(2, 5);
 }
