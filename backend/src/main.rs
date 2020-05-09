@@ -1,10 +1,11 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
 #[get("/connect")]
 fn connect() -> &'static str {
-   "I'm sorry Dave, I'm afraid I can't do that"
+    "I'm sorry Dave, I'm afraid I can't do that"
 }
 
 fn rocket() -> rocket::Rocket {
@@ -12,14 +13,14 @@ fn rocket() -> rocket::Rocket {
 }
 
 fn main() {
-   rocket().launch();
+    rocket().launch();
 }
 
 #[cfg(test)]
 mod test {
     use super::rocket;
-    use rocket::local::Client;
     use rocket::http::Status;
+    use rocket::local::Client;
 
     #[test]
     fn connect() {
