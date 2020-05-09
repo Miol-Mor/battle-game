@@ -16,8 +16,11 @@ jobs:
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
-        components: clippy
+        components: clippy, rustfmt
         override: true
+    - name: Rustfmt check
+      working-directory: ./backend
+      run: cargo fmt -- --check -v
     - name: Clippy check
       uses: actions-rs/clippy-check@v1.0.5
       with:
