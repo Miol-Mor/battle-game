@@ -8,19 +8,21 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
+    # Checkout our repo
     - uses: actions/checkout@v2
+    # Install Rust toolchain with required components
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
         components: clippy, rustfmt
         override: true
+    # Run rustfmt check against our code
     - name: Rustfmt check
       working-directory: ./backend
       run: cargo fmt -- --check -v
+    # Check the code with Clippy
     - name: Clippy check
       uses: actions-rs/clippy-check@v1.0.5
       with:
