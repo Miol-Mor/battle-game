@@ -26,6 +26,7 @@ class Hex extends PIXI.Graphics {
     
     // set and draw unit here
     set_unit(unit) {
+        assert(this.unit == null, 'unit is already set: ', this);
         this.unit = unit;
         this.draw_unit(unit);
     }
