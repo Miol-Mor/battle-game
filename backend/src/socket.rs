@@ -58,3 +58,20 @@ impl Socket {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::Socket;
+    use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+
+    #[test]
+    fn new() {
+        let port = 9999;
+
+        let socket = Socket::new(port).unwrap();
+        assert_eq!(
+            socket.server.local_addr().unwrap(),
+            SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, port)),
+        )
+    }
+}
