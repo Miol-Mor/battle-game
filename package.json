@@ -1,0 +1,17 @@
+{
+  "name": "battle-game",
+  "version": "0.1.0",
+  "description": "",
+  "dependencies": {},
+  "devDependencies": {
+    "jshint": "^2.11.1"
+  },
+  "scripts": {
+    "lint": "jshint --exclude ./frontend/pixi ./frontend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Miol-Mor/battle-game.git"
+  },
+  "homepage": "https://github.com/Miol-Mor/battle-game"
+}
