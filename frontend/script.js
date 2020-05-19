@@ -1,13 +1,13 @@
-let type = "WebGL"
+let type = "WebGL";
 if(!PIXI.utils.isWebGLSupported()){
-    type = "canvas"
+    type = "canvas";
 }
 PIXI.utils.sayHello(type);
 
 window.onload = start;
 
 function start() {
-    let app = new PIXI.Application({ 
+    let app = new PIXI.Application({
         width: 256,
         height: 256,
         antialias: true,

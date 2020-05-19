@@ -26,10 +26,6 @@ class Hex extends PIXI.Graphics {
 
 
 class Hex_grid {
-    BORDER_COLOR = 0x000000;
-    BORDER_WIDTH = 1;
-    FILL_COLOR = 0x1020b0;
-
     // stage - where to draw grid (PIXI.Container)
     // row_n, col_n - number of rows and columns in grid
     // cellsize - side of a hexcell (length of its edge)
@@ -57,7 +53,7 @@ class Hex_grid {
             this.cells[y] = [];
             for (let x = 0; x < this.col_n; x++) {
                 let cur_hex = new Hex(this.cell_size, this.BORDER_WIDTH, this.BORDER_COLOR);
-                
+
                 let y_offset = side;
                 let x_offset = side * Math.sqrt(3) / 2;
                 if (y % 2 == 0) {
@@ -65,7 +61,7 @@ class Hex_grid {
                 }
                 let x_coord = (side * Math.sqrt(3)) * x + x_offset;
                 let y_coord = (side * 3 / 2) * y + y_offset;
-                
+
                 cur_hex.position.set(x_coord, y_coord);
                 grid_container.addChild(cur_hex);
                 this.cells[y].push(cur_hex);
@@ -84,6 +80,8 @@ class Hex_grid {
         cur_hex.drawPolygon(cur_hex.points);
         cur_hex.endFill();
     }
-
-    
 }
+
+Hex_grid.BORDER_COLOR = 0x000000;
+Hex_grid.BORDER_WIDTH = 1;
+Hex_grid.FILL_COLOR = 0x1020b0;
