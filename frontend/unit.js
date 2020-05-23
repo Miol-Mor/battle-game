@@ -4,13 +4,13 @@ class Unit {
         this.params = params;
 
         this.sprite.anchor.set(0.5, 0.5);
-        this.scale_sprite(this.sprite, img_size);
+        this.scale_sprite(img_size);
     }
 
     // scale sprite to fit size
-    scale_sprite(sprite, size) {
-        let scale = size / Math.max(sprite.width, sprite.height);
-        sprite.width *= scale;
-        sprite.height *= scale;
+    scale_sprite(size) {
+        let scale = size / Math.max(this.sprite.width, this.sprite.height);
+        this.sprite.width *= scale;
+        this.sprite.height *= scale;
     }
 }
