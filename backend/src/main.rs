@@ -2,6 +2,7 @@ use actix_web::middleware::Logger;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 
+mod game_objects;
 mod websocket;
 
 #[macro_use]
