@@ -1,12 +1,11 @@
 class Game {
-    app = null;
-    grid = null;
-
     // players_num - number of players (for the future)
     // app - PIXI aplication, used for this game
     // grid - grid for this game (Hex_grid)
-    constructor(players_num = 2, grid_params) {
+    constructor(players_num = 2, grid_params = {}) {
         this.players_num = players_num;
+        this.app = null;
+        this.grid = null;
     }
 
     // needed, because constructor cannot be async
@@ -45,7 +44,7 @@ class Game {
         return new Promise(resolve => {
             this.app.loader.load(function() {
                 resolve("images loaded");
-            })
+            });
         });
     }
 
