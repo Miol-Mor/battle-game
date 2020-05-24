@@ -2,13 +2,13 @@ use super::cell::Cell;
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub struct Grid<'a> {
-    pub cells: &'a [Cell],
+pub struct Grid {
+    pub cells: Vec<Cell>,
 }
 
 #[cfg(test)]
 mod test {
-    use super::super::cell::Cell;
+    use super::super::cell::{Cell, CellType};
     use super::super::unit::Unit;
     use super::Grid;
 
@@ -19,14 +19,16 @@ mod test {
             x: 1,
             y: 1,
             unit: None,
+            cell_type: CellType::Regular,
         };
         let cell_two = Cell {
             x: 1,
             y: 2,
             unit: Some(unit),
+            cell_type: CellType::Regular,
         };
         let grid = Grid {
-            cells: &[cell_one.clone(), cell_two.clone()],
+            cells: vec![cell_one.clone(), cell_two.clone()],
         };
         let grid_string = serde_json::to_string(&grid).unwrap();
         let cell_one_string = serde_json::to_string(&cell_one).unwrap();
