@@ -1,42 +1,50 @@
-use super::cell::Cell;
+use super::hex::Hex;
 use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct Grid {
-    pub cells: Vec<Cell>,
+    pub hexs: Vec<Hex>,
 }
 
 #[cfg(test)]
 mod test {
-    use super::super::cell::{Cell, CellType};
+    use super::super::content::{Wall, WallKind};
+    use super::super::hex::Hex;
     use super::super::unit::Unit;
     use super::Grid;
 
     #[test]
     fn sertialize() {
-        let unit = Unit { hp: 1, attack: 120 };
-        let cell_one = Cell {
+        let unit = Unit {
+            player: 1,
+            hp: 1,
+            attack: [120, 130],
+            speed: 1,
+        };
+        let hex_one = Hex {
             x: 1,
             y: 1,
             unit: None,
-            cell_type: CellType::Regular,
+            content: None,
         };
-        let cell_two = Cell {
+        let hex_two = Hex {
             x: 1,
             y: 2,
             unit: Some(unit),
-            cell_type: CellType::Regular,
+            content: Some(Wall {
+                wall: WallKind::Normal,
+            }),
         };
         let grid = Grid {
-            cells: vec![cell_one.clone(), cell_two.clone()],
+            hexs: vec![hex_one.clone(), hex_two.clone()],
         };
         let grid_string = serde_json::to_string(&grid).unwrap();
-        let cell_one_string = serde_json::to_string(&cell_one).unwrap();
-        let cell_two_string = serde_json::to_string(&cell_two).unwrap();
+        let hex_one_string = serde_json::to_string(&hex_one).unwrap();
+        let hex_two_string = serde_json::to_string(&hex_two).unwrap();
 
         assert_eq!(
             grid_string,
-            format!("{{\"cells\":[{},{}]}}", cell_one_string, cell_two_string),
+            format!("{{\"hexs\":[{},{}]}}", hex_one_string, hex_two_string),
         );
     }
 }

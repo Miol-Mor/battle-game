@@ -1,3 +1,4 @@
-pub mod cell;
+pub mod content;
 pub mod grid;
+pub mod hex;
 pub mod unit;
