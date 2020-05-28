@@ -12,9 +12,9 @@ jobs:
     steps:
       # Checkout repo
       - uses: actions/checkout@v2
-      # Install npm and deps
+      # Setup npm
       - name: Install Node
         uses: actions/setup-node@v1
-      - run: npm install
-      # Run linter
-      - run: npm run lint
+      # Install deps and run linter for frontend
+      - run: npm install && npm run lint
+        working-directory: frontend

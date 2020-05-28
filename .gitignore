@@ -10,5 +10,5 @@ backend/Cargo.lock
 backend/**/*.rs.bk
 
 # NPM stuff
-node_modules
+node_modules/
 package-lock.json
