@@ -7,7 +7,7 @@
     "jshint": "^2.11.1"
   },
   "scripts": {
-    "lint": "jshint --exclude ./frontend/pixi ./frontend"
+    "lint": "jshint --exclude pixi,node_modules ."
   },
   "repository": {
     "type": "git",
