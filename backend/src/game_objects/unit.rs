@@ -13,7 +13,7 @@ mod test {
     use super::Unit;
 
     #[test]
-    fn sertialize() {
+    fn serialize() {
         let unit = Unit {
             player: 1,
             hp: 10,

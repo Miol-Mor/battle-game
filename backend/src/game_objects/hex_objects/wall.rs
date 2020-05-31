@@ -2,12 +2,12 @@ use serde::Serialize;
 
 #[derive(Clone, Serialize)]
 pub enum WallKind {
-    Normal,
+    Default,
 }
 
 #[derive(Clone, Serialize)]
 pub struct Wall {
-    pub wall: WallKind,
+    pub kind: WallKind,
 }
 
 #[cfg(test)]
@@ -15,12 +15,12 @@ mod test {
     use super::{Wall, WallKind};
 
     #[test]
-    fn sertialize() {
+    fn serialize() {
         let wall = Wall {
-            wall: WallKind::Normal,
+            kind: WallKind::Default,
         };
         let wall_string = serde_json::to_string(&wall).unwrap();
 
-        assert_eq!(wall_string, "{\"wall\":\"Normal\"}");
+        assert_eq!(wall_string, "{\"kind\":\"Default\"}");
     }
 }

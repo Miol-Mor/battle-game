@@ -1,4 +1,4 @@
-use super::content::Wall;
+use super::hex_objects::content::Content;
 use super::unit::Unit;
 use serde::Serialize;
 
@@ -7,17 +7,18 @@ pub struct Hex {
     pub x: u32,
     pub y: u32,
     pub unit: Option<Unit>,
-    pub content: Option<Wall>,
+    pub content: Option<Content>,
 }
 
 #[cfg(test)]
 mod test {
-    use super::super::content::{Wall, WallKind};
+    use super::super::hex_objects::content::Content;
+    use super::super::hex_objects::wall::{Wall, WallKind};
     use super::super::unit::Unit;
     use super::Hex;
 
     #[test]
-    fn sertialize_without_anything() {
+    fn serialize_without_anything() {
         let cell = Hex {
             x: 1,
             y: 2,
@@ -33,7 +34,7 @@ mod test {
     }
 
     #[test]
-    fn serialize_with_unit_and_content() {
+    fn serialize_with_unit_and_content_wall() {
         let unit = Unit {
             player: 1,
             hp: 10,
@@ -41,13 +42,13 @@ mod test {
             speed: 4,
         };
         let wall = Wall {
-            wall: WallKind::Normal,
+            kind: WallKind::Default,
         };
         let hex = Hex {
             x: 1,
             y: 2,
             unit: Some(unit.clone()),
-            content: Some(wall.clone()),
+            content: Some(Content::Wall(wall.clone())),
         };
         let hex_string = serde_json::to_string(&hex).unwrap();
         let unit_string = serde_json::to_string(&unit).unwrap();
@@ -56,7 +57,7 @@ mod test {
         assert_eq!(
             hex_string,
             format!(
-                "{{\"x\":1,\"y\":2,\"unit\":{},\"content\":{}}}",
+                "{{\"x\":1,\"y\":2,\"unit\":{},\"content\":{{\"Wall\":{}}}}}",
                 unit_string, wall_string,
             ),
         );
