@@ -6,6 +6,23 @@ pub struct Grid {
     pub hexes: Vec<Hex>,
 }
 
+impl Grid {
+    pub fn new(row_n: u32, col_n: u32) -> Grid {
+        let hexes: Vec<Hex> = (0..row_n)
+            .flat_map(|x| {
+                (0..col_n).map(move |y| Hex {
+                    x,
+                    y,
+                    unit: None,
+                    content: None,
+                })
+            })
+            .collect();
+
+        Grid { hexes }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::super::hex::Hex;
@@ -13,6 +30,27 @@ mod test {
     use super::super::hex_objects::wall::{Wall, WallKind};
     use super::super::unit::Unit;
     use super::Grid;
+
+    #[test]
+    fn new() {
+        let row_n = 10;
+        let col_n = 13;
+        let grid = Grid::new(row_n, col_n);
+
+        assert_eq!(grid.hexes.len(), (row_n * col_n) as usize);
+
+        let mut hexes = grid.hexes.into_iter();
+        for x in 0..row_n {
+            for y in 0..col_n {
+                let hex = hexes.next().unwrap();
+
+                assert_eq!(hex.x, x);
+                assert_eq!(hex.y, y);
+                assert_eq!(hex.unit.is_none(), true);
+                assert_eq!(hex.content.is_none(), true);
+            }
+        }
+    }
 
     #[test]
     fn serialize() {
