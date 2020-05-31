@@ -4,6 +4,8 @@ use actix_web_actors::ws;
 
 mod game_objects;
 mod websocket;
+mod routes;
+mod handlers;
 
 #[macro_use]
 extern crate log;
@@ -20,6 +22,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/ws/", web::get().to(index))
             .wrap(Logger::default())
+            .configure(routes::routes)
     })
     .bind("127.0.0.1:8088")?
     .run()
