@@ -55,6 +55,10 @@ class Hex_grid {
         this.y_offset = y_offset;
         // hexs - matrix of hexs (call - hexs[y][x], where y - number of row, x - number of column)
         this.hexs = [];
+        // graphic constants
+        this.BORDER_COLOR = 0x000000;
+        this.BORDER_WIDTH = 1;
+        this.FILL_COLOR = 0x1020b0;
     }
 
     // draw grid on the stage
@@ -94,8 +98,17 @@ class Hex_grid {
         cur_hex.drawPolygon(cur_hex.points);
         cur_hex.endFill();
     }
+
+    // just for debug
+    draw_hex(y, x) {
+        let cur_hex = this.hexs[y][x];
+
+        cur_hex.clear();
+        cur_hex.lineStyle(1, this.BORDER_COLOR, 1);
+        cur_hex.beginFill(0xd6b609);
+        cur_hex.drawPolygon(cur_hex.points);
+        cur_hex.endFill();
+    }
 }
 
-Hex_grid.BORDER_COLOR = 0x000000;
-Hex_grid.BORDER_WIDTH = 1;
-Hex_grid.FILL_COLOR = 0x1020b0;
+
