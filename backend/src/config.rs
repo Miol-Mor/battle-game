@@ -37,3 +37,20 @@ fn get_initial_config() -> Config {
         config
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_config() {
+        let config = get_initial_config();
+        assert_ne!(config.address, "".to_string());
+    }
+
+    #[test]
+    fn get_config_from_lazy_static() {
+        let config = &CONFIG;
+        assert_ne!(config.address, "".to_string());
+    }
+}
