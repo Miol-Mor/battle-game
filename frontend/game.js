@@ -6,6 +6,9 @@ class Game {
         this.players_num = players_num;
         this.app = null;
         this.grid = null;
+
+        // graphic constants
+        this.BACKGROUND_COLOR = 0xd6b609;
     }
 
     // needed, because constructor cannot be async
@@ -24,7 +27,7 @@ class Game {
             transparent: false,
             resolution: 1
         });
-        app.renderer.backgroundColor = 0xd6b609;
+        app.renderer.backgroundColor = this.BACKGROUND_COLOR;
 
         // resize PIXI canvas acording to size of window
         app.renderer.autoDensity = true;
