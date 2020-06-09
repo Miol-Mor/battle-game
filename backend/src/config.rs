@@ -7,6 +7,8 @@ use std::{fs, path};
 pub struct Config {
     // Address with port, e.g. "localhost:8088"
     pub address: String,
+    pub jwt_expiration: i64,
+    pub jwt_key: String,
 }
 
 impl Config {
