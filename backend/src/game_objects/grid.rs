@@ -31,7 +31,7 @@ impl Grid {
 mod test {
     use super::super::hex::Hex;
     use super::super::hex_objects::content::Content;
-    use super::super::hex_objects::wall::{Wall, WallKind};
+    use super::super::hex_objects::wall::Wall;
     use super::super::unit::Unit;
     use super::Grid;
 
@@ -91,9 +91,7 @@ mod test {
             x: 1,
             y: 2,
             unit: Some(unit),
-            content: Some(Content::Wall(Wall {
-                kind: WallKind::Default,
-            })),
+            content: Some(Content::Wall(Wall {})),
         };
         let grid = Grid {
             hexes: vec![hex_one.clone(), hex_two.clone()],
