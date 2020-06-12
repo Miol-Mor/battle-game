@@ -21,6 +21,10 @@ impl Grid {
 
         Grid { hexes }
     }
+
+    pub fn get_hex(&mut self, x: u32, y: u32) -> Option<&mut Hex> {
+        self.hexes.iter_mut().find(|hex| hex.x == x && hex.y == y)
+    }
 }
 
 #[cfg(test)]
@@ -50,6 +54,23 @@ mod test {
                 assert_eq!(hex.content.is_none(), true);
             }
         }
+    }
+
+    #[test]
+    fn get_hex() {
+        let mut grid = Grid::new(5, 5);
+
+        // hex that exists
+        let hex = grid.get_hex(1, 2);
+
+        assert!(hex.is_some());
+        let hex = hex.unwrap();
+        assert_eq!(hex.x, 1);
+        assert_eq!(hex.y, 2);
+
+        // hex that does not exists
+        let hex = grid.get_hex(3, 8);
+        assert!(hex.is_none());
     }
 
     #[test]
