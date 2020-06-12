@@ -2,6 +2,9 @@ use actix::{Actor, StreamHandler};
 use actix_web_actors::ws;
 
 use super::game::Game;
+use super::game_objects::hex_objects::content::Content;
+use super::game_objects::hex_objects::wall::{Wall, WallKind};
+use super::game_objects::unit::Unit;
 
 /// Define http actor
 pub struct Websocket;
@@ -27,7 +30,27 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
     fn started(&mut self, ctx: &mut Self::Context) {
         debug!("Client connected");
 
-        let game = Game::new(2, 2);
+        let mut game = Game::new(2, 2);
+        let unit = Unit {
+            player: 1,
+            hp: 1,
+            attack: [1, 2],
+            speed: 1,
+        };
+        let wall = Wall {
+            kind: WallKind::Default,
+        };
+
+        match game.set_unit(0, 0, unit) {
+            Ok(_) => {}
+            Err(error) => ctx.text(error),
+        }
+
+        match game.set_content(1, 1, Content::Wall(wall)) {
+            Ok(_) => {}
+            Err(error) => ctx.text(error),
+        }
+
         // TODO: process error on unwrap
         ctx.text(&serde_json::to_string(&game).unwrap());
     }
