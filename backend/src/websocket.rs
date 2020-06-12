@@ -3,7 +3,7 @@ use actix_web_actors::ws;
 
 use super::game::Game;
 use super::game_objects::hex_objects::content::Content;
-use super::game_objects::hex_objects::wall::{Wall, WallKind};
+use super::game_objects::hex_objects::wall::Wall;
 use super::game_objects::unit::Unit;
 
 /// Define http actor
@@ -37,9 +37,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
             attack: [1, 2],
             speed: 1,
         };
-        let wall = Wall {
-            kind: WallKind::Default,
-        };
+        let wall = Wall {};
 
         match game.set_unit(0, 0, unit) {
             Ok(_) => {}

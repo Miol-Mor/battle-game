@@ -44,7 +44,7 @@ impl Game {
 #[cfg(test)]
 mod test {
     use super::super::game_objects::hex_objects::content::Content;
-    use super::super::game_objects::hex_objects::wall::{Wall, WallKind};
+    use super::super::game_objects::hex_objects::wall::Wall;
     use super::super::game_objects::unit::Unit;
     use super::Game;
 
@@ -106,9 +106,7 @@ mod test {
         let y2 = 18;
 
         let mut game = Game::new(5, 5);
-        let wall = Wall {
-            kind: WallKind::Default,
-        };
+        let wall = Wall {};
 
         let res = game.set_content(x1, y1, Content::Wall(wall.clone()));
         assert!(res.is_ok());
