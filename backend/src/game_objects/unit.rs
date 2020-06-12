@@ -10,21 +10,22 @@ pub struct Unit {
 
 #[cfg(test)]
 mod test {
-    use super::Unit;
+    use crate::fixtures;
 
     #[test]
     fn serialize() {
-        let unit = Unit {
-            player: 1,
-            hp: 10,
-            attack: [2, 3],
-            speed: 3,
-        };
+        let unit = fixtures::unit::unit();
         let unit_string = serde_json::to_string(&unit).unwrap();
 
         assert_eq!(
             unit_string,
-            "{\"player\":1,\"hp\":10,\"attack\":[2,3],\"speed\":3}",
+            format!(
+                "{{\"player\":{},\"hp\":{},\"attack\":{},\"speed\":{}}}",
+                fixtures::unit::player(),
+                fixtures::unit::hp(),
+                serde_json::to_string(&fixtures::unit::attack()).unwrap(),
+                fixtures::unit::speed(),
+            ),
         );
     }
 }

@@ -29,17 +29,14 @@ impl Grid {
 
 #[cfg(test)]
 mod test {
-    use super::super::hex::Hex;
-    use super::super::hex_objects::content::Content;
-    use super::super::hex_objects::wall::Wall;
-    use super::super::unit::Unit;
     use super::Grid;
+    use crate::fixtures;
 
     #[test]
     fn new() {
-        let row_n = 10;
-        let col_n = 13;
-        let grid = Grid::new(row_n, col_n);
+        let grid = fixtures::grid::grid();
+        let row_n = fixtures::grid::row_n();
+        let col_n = fixtures::grid::col_n();
 
         assert_eq!(grid.hexes.len(), (row_n * col_n) as usize);
 
@@ -50,49 +47,34 @@ mod test {
 
                 assert_eq!(hex.x, x);
                 assert_eq!(hex.y, y);
-                assert_eq!(hex.unit.is_none(), true);
-                assert_eq!(hex.content.is_none(), true);
+                assert!(hex.unit.is_none());
+                assert!(hex.content.is_none());
             }
         }
     }
 
     #[test]
     fn get_hex() {
-        let mut grid = Grid::new(5, 5);
+        let mut grid = fixtures::grid::grid();
 
         // hex that exists
-        let hex = grid.get_hex(1, 2);
+        let hex = grid.get_hex(fixtures::grid::x_in_grid(), fixtures::grid::y_in_grid());
 
         assert!(hex.is_some());
         let hex = hex.unwrap();
-        assert_eq!(hex.x, 1);
-        assert_eq!(hex.y, 2);
+        assert_eq!(hex.x, fixtures::grid::x_in_grid());
+        assert_eq!(hex.y, fixtures::grid::y_in_grid());
 
         // hex that does not exists
-        let hex = grid.get_hex(3, 8);
+        let hex = grid.get_hex(fixtures::grid::x_in_grid(), fixtures::grid::y_out_grid());
         assert!(hex.is_none());
     }
 
     #[test]
     fn serialize() {
-        let unit = Unit {
-            player: 1,
-            hp: 1,
-            attack: [120, 130],
-            speed: 1,
-        };
-        let hex_one = Hex {
-            x: 1,
-            y: 1,
-            unit: None,
-            content: None,
-        };
-        let hex_two = Hex {
-            x: 1,
-            y: 2,
-            unit: Some(unit),
-            content: Some(Content::Wall(Wall {})),
-        };
+        let hex_one = fixtures::hex::hex_empty();
+        let hex_two = fixtures::hex::hex_with_unit_and_wall();
+
         let grid = Grid {
             hexes: vec![hex_one.clone(), hex_two.clone()],
         };

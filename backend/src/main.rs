@@ -5,6 +5,7 @@ use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 
 mod config;
+mod fixtures;
 mod game;
 mod game_objects;
 mod handlers;

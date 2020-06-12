@@ -43,10 +43,8 @@ impl Game {
 
 #[cfg(test)]
 mod test {
-    use super::super::game_objects::hex_objects::content::Content;
-    use super::super::game_objects::hex_objects::wall::Wall;
-    use super::super::game_objects::unit::Unit;
     use super::Game;
+    use crate::fixtures;
 
     #[test]
     fn new() {
@@ -60,75 +58,74 @@ mod test {
 
     #[test]
     fn set_unit() {
-        // coords of existing hex
-        let x1 = 0;
-        let y1 = 1;
-        // coords of non existing hex
-        let x2 = 10;
-        let y2 = 18;
-        // unit
-        let player = 1;
-        let hp = 1;
-        let attack = [1, 2];
-        let speed = 1;
+        let mut game = Game::new(fixtures::grid::row_n(), fixtures::grid::col_n());
+        let unit = fixtures::unit::unit();
 
-        let mut game = Game::new(5, 5);
-        let unit = Unit {
-            player,
-            hp,
-            attack,
-            speed,
-        };
-
-        let res = game.set_unit(x1, y1, unit.clone());
+        let res = game.set_unit(
+            fixtures::grid::x_in_grid(),
+            fixtures::grid::y_in_grid(),
+            unit.clone(),
+        );
         assert!(res.is_ok());
-        assert!(game.field.get_hex(x1, y1).unwrap().unit.is_some());
-        assert!(game.field.get_hex(x1, y1).unwrap().content.is_none());
+        let hex = game
+            .field
+            .get_hex(fixtures::grid::x_in_grid(), fixtures::grid::y_in_grid())
+            .unwrap();
+        assert!(hex.unit.is_some());
+        assert!(hex.content.is_none());
 
-        let field_unit = game.field.get_hex(x1, y1).unwrap().unit.as_ref().unwrap();
-        assert_eq!(field_unit.player, player);
-        assert_eq!(field_unit.hp, hp);
-        assert_eq!(field_unit.attack, attack);
-        assert_eq!(field_unit.speed, speed);
+        let field_unit = hex.unit.as_ref().unwrap();
+        assert_eq!(field_unit.player, fixtures::unit::player());
+        assert_eq!(field_unit.hp, fixtures::unit::hp());
+        assert_eq!(field_unit.attack, fixtures::unit::attack());
+        assert_eq!(field_unit.speed, fixtures::unit::speed());
 
-        let res = game.set_unit(x2, y2, unit);
+        let res = game.set_unit(
+            fixtures::grid::x_out_grid(),
+            fixtures::grid::y_out_grid(),
+            unit,
+        );
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), "no hex");
     }
 
     #[test]
     fn set_content() {
-        // coords of existing hex
-        let x1 = 0;
-        let y1 = 1;
-        // coords of non existing hex
-        let x2 = 10;
-        let y2 = 18;
+        let mut game = Game::new(fixtures::grid::row_n(), fixtures::grid::col_n());
 
-        let mut game = Game::new(5, 5);
-        let wall = Wall {};
-
-        let res = game.set_content(x1, y1, Content::Wall(wall.clone()));
+        let res = game.set_content(
+            fixtures::grid::x_in_grid(),
+            fixtures::grid::y_in_grid(),
+            fixtures::content::content_wall(),
+        );
         assert!(res.is_ok());
-        assert!(game.field.get_hex(x1, y1).unwrap().unit.is_none());
-        assert!(game.field.get_hex(x1, y1).unwrap().content.is_some());
+        let hex = game
+            .field
+            .get_hex(fixtures::grid::x_in_grid(), fixtures::grid::y_in_grid())
+            .unwrap();
+        assert!(hex.unit.is_none());
+        assert!(hex.content.is_some());
 
-        let res = game.set_content(x2, y2, Content::Wall(wall));
+        let res = game.set_content(
+            fixtures::grid::x_out_grid(),
+            fixtures::grid::y_out_grid(),
+            fixtures::content::content_wall(),
+        );
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), "no hex");
     }
 
     #[test]
     fn serialize() {
-        let row_n = 1;
-        let col_n = 1;
-        let game = Game::new(row_n, col_n);
+        let game = Game::new(fixtures::grid::row_n(), fixtures::grid::col_n());
 
         let game_string = serde_json::to_string(&game).unwrap();
         assert_eq!(
             game_string,
             format!(
-                "{{\"row_n\":1,\"col_n\":1,\"field\":{}}}",
+                "{{\"row_n\":{},\"col_n\":{},\"field\":{}}}",
+                fixtures::grid::row_n(),
+                fixtures::grid::col_n(),
                 serde_json::to_string(&game.field).unwrap()
             ),
         );
