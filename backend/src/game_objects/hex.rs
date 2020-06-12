@@ -6,14 +6,16 @@ use serde::Serialize;
 pub struct Hex {
     pub x: u32,
     pub y: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unit: Option<Unit>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<Content>,
 }
 
 #[cfg(test)]
 mod test {
     use super::super::hex_objects::content::Content;
-    use super::super::hex_objects::wall::{Wall, WallKind};
+    use super::super::hex_objects::wall::Wall;
     use super::super::unit::Unit;
     use super::Hex;
 
@@ -27,10 +29,7 @@ mod test {
         };
         let cell_string = serde_json::to_string(&cell).unwrap();
 
-        assert_eq!(
-            cell_string,
-            "{\"x\":1,\"y\":2,\"unit\":null,\"content\":null}",
-        );
+        assert_eq!(cell_string, "{\"x\":1,\"y\":2}",);
     }
 
     #[test]
@@ -41,24 +40,22 @@ mod test {
             attack: [2, 4],
             speed: 4,
         };
-        let wall = Wall {
-            kind: WallKind::Default,
-        };
+        let content = Content::Wall(Wall {});
         let hex = Hex {
             x: 1,
             y: 2,
             unit: Some(unit.clone()),
-            content: Some(Content::Wall(wall.clone())),
+            content: Some(content.clone()),
         };
         let hex_string = serde_json::to_string(&hex).unwrap();
         let unit_string = serde_json::to_string(&unit).unwrap();
-        let wall_string = serde_json::to_string(&wall).unwrap();
+        let content_string = serde_json::to_string(&content).unwrap();
 
         assert_eq!(
             hex_string,
             format!(
-                "{{\"x\":1,\"y\":2,\"unit\":{},\"content\":{{\"Wall\":{}}}}}",
-                unit_string, wall_string,
+                "{{\"x\":1,\"y\":2,\"unit\":{},\"content\":{}}}",
+                unit_string, content_string,
             ),
         );
     }
