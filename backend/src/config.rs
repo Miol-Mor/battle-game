@@ -7,6 +7,7 @@ use std::{fs, path};
 pub struct Config {
     // Address with port, e.g. "localhost:8088"
     pub address: String,
+    pub auth_salt: String,
     pub jwt_expiration: i64,
     pub jwt_key: String,
 }
@@ -16,6 +17,9 @@ impl Config {
     pub fn new() -> Self {
         Config {
             address: "localhost:8088".to_string(),
+            jwt_expiration: 48,
+            jwt_key: "secret_key_change_me".to_string(),
+            auth_salt: "hashing_salt_change_me".to_string(),
         }
     }
 }
