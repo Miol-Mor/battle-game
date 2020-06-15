@@ -10,6 +10,7 @@ mod errors;
 mod game;
 mod game_objects;
 mod handlers;
+mod models;
 mod routes;
 mod websocket;
 
