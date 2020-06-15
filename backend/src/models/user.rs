@@ -23,3 +23,18 @@ pub fn create_random_user() -> User {
         created_at: Utc::now().naive_utc(),
     }
 }
+
+pub fn find(storage: &UserStorage, id: Uuid) -> Option<User> {
+    match storage
+        .0
+        .iter()
+        .position(|user| user.id.eq(&id.to_string()))
+    {
+        Some(pos) => Some(storage.0[pos].clone()),
+        None => None,
+    }
+}
+
+pub fn get_all(storage: &UserStorage) -> Vec<User> {
+    storage.0.clone()
+}

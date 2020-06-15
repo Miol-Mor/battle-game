@@ -6,6 +6,7 @@ use actix_web_actors::ws;
 
 mod auth;
 mod config;
+mod database;
 mod errors;
 mod game;
 mod game_objects;
@@ -31,6 +32,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/ws/", web::get().to(index))
             .wrap(Logger::default())
+            .configure(database::add_user_storage)
             .configure(routes::routes)
     })
     .bind(CONFIG.address.clone())?
