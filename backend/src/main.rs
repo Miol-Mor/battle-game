@@ -6,6 +6,7 @@ use actix_web_actors::ws;
 
 mod auth;
 mod config;
+mod errors;
 mod game;
 mod game_objects;
 mod handlers;
