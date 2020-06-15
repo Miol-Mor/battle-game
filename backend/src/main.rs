@@ -4,6 +4,7 @@ use actix_web::middleware::Logger;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 
+mod auth;
 mod config;
 mod game;
 mod game_objects;
