@@ -1,4 +1,6 @@
-class Unit {
+import * as PIXI from 'pixi.js';
+
+export class Unit {
     constructor(texture, img_size, params) {
         this.sprite = new PIXI.Sprite(texture);
         this.params = params;

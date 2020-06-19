@@ -1,4 +1,8 @@
-class Game {
+import * as PIXI from 'pixi.js';
+import { Hex_grid } from './grid';
+import { Unit } from './unit';
+
+export class Game {
     // players_num - number of players (for the future)
     // app - PIXI aplication, used for this game
     // grid - grid for this game (Hex_grid)
@@ -73,13 +77,13 @@ class Game {
     // actions with units
     create_unit(texture, img_size, params, y, x) {
         let unit = new Unit(texture, img_size, params);
-        this.grid.hexs[y][x].set_unit(unit);
+        this.grid.hexes[y][x].set_unit(unit);
         return unit;
     }
 
     move_unit(from_y, from_x, to_y, to_x) {
-        let from_hex = this.grid.hexs[from_y][from_x];
-        let to_hex = this.grid.hexs[to_y][to_x];
+        let from_hex = this.grid.hexes[from_y][from_x];
+        let to_hex = this.grid.hexes[to_y][to_x];
         let unit = from_hex.unit;
 
         from_hex.unset_unit();

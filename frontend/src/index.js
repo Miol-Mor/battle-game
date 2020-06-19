@@ -1,3 +1,7 @@
+import * as PIXI from 'pixi.js';
+import { Game } from './game';
+
+
 let type = "WebGL";
 if(!PIXI.utils.isWebGLSupported()){
     type = "canvas";
@@ -6,16 +10,18 @@ PIXI.utils.sayHello(type);
 
 window.onload = start;
 
+
 async function start() {
-    game = new Game();
+    let game = new Game();
+    window.game = game;
     await game.start();
 
     // inspect all our units
     for (let y = 0; y < game.grid.row_n; y++) {
         for (let x = 0; x < game.grid.col_n; x++) {
-            if (game.grid.hexs[y][x].unit) {
+            if (game.grid.hexes[y][x].unit) {
                 console.log(y, x);
-                console.log(game.grid.hexs[y][x].unit.params);
+                console.log(game.grid.hexes[y][x].unit.params);
             }
         }
     }

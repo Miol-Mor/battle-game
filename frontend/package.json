@@ -2,16 +2,40 @@
   "name": "battle-game",
   "version": "0.1.0",
   "description": "",
-  "dependencies": {},
+  "main": "game.js",
+  "dependencies": {
+    "pixi.js": "^5.2.4"
+  },
   "devDependencies": {
-    "jshint": "^2.11.1"
+    "@babel/preset-env": "^7.10.2",
+    "canvas": "^2.6.1",
+    "jest": "^26.0.1",
+    "jest-webgl-canvas-mock": "^0.2.3",
+    "jshint": "^2.11.1",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.11.0"
   },
   "scripts": {
-    "lint": "jshint --exclude pixi,node_modules ."
+    "build": "webpack",
+    "watch": "webpack --watch",
+    "run": "webpack-dev-server",
+    "lint": "jshint .",
+    "test": "jest"
+  },
+  "jest": {
+    "setupFiles": [
+      "jest-webgl-canvas-mock"
+    ]
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Miol-Mor/battle-game.git"
+  },
+  "author": "MiolMor",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Miol-Mor/battle-game/issues"
   },
   "homepage": "https://github.com/Miol-Mor/battle-game"
 }

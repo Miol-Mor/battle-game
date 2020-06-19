@@ -1,3 +1,5 @@
+import * as PIXI from 'pixi.js';
+
 class Hex extends PIXI.Graphics {
     constructor(side, border_width, border_color) {
         super();
@@ -41,7 +43,7 @@ class Hex extends PIXI.Graphics {
 }
 
 
-class Hex_grid {
+export class Hex_grid {
     // stage - where to draw grid (PIXI.Container)
     // row_n, col_n - number of rows and columns in grid
     // cellsize - side of a hexcell (length of its edge)
@@ -53,8 +55,8 @@ class Hex_grid {
         this.hex_size = hex_size;
         this.x_offset = x_offset;
         this.y_offset = y_offset;
-        // hexs - matrix of hexs (call - hexs[y][x], where y - number of row, x - number of column)
-        this.hexs = [];
+        // hexes - matrix of hexes (call - hexes[y][x], where y - number of row, x - number of column)
+        this.hexes = [];
         // graphic constants
         this.BORDER_COLOR = 0x000000;
         this.BORDER_WIDTH = 1;
@@ -69,7 +71,7 @@ class Hex_grid {
 
         let side = this.hex_size;
         for (let y = 0; y < this.row_n; y++) {
-            this.hexs[y] = [];
+            this.hexes[y] = [];
             for (let x = 0; x < this.col_n; x++) {
                 let cur_hex = new Hex(this.hex_size, this.BORDER_WIDTH, this.BORDER_COLOR);
 
@@ -83,14 +85,14 @@ class Hex_grid {
 
                 cur_hex.position.set(x_coord, y_coord);
                 grid_container.addChild(cur_hex);
-                this.hexs[y].push(cur_hex);
+                this.hexes[y].push(cur_hex);
             }
         }
     }
 
     // fill hex in row y, column x with FILLCOLOR
     fill_hex(y, x) {
-        let cur_hex = this.hexs[y][x];
+        let cur_hex = this.hexes[y][x];
 
         cur_hex.clear();
         cur_hex.lineStyle(1, this.BORDER_COLOR, 1);
@@ -101,7 +103,7 @@ class Hex_grid {
 
     // just for debug
     draw_hex(y, x) {
-        let cur_hex = this.hexs[y][x];
+        let cur_hex = this.hexes[y][x];
 
         cur_hex.clear();
         cur_hex.lineStyle(1, this.BORDER_COLOR, 1);
@@ -110,5 +112,3 @@ class Hex_grid {
         cur_hex.endFill();
     }
 }
-
-
