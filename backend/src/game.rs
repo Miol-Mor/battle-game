@@ -133,4 +133,35 @@ mod test {
             ),
         );
     }
+
+    #[test]
+    fn my_test() {
+        let mut game = Game::new(3, 2);
+        let zombie = Unit {
+            player: 1,
+            hp: 20,
+            attack: [2, 3],
+            speed: 1
+        };
+        let wolf = Unit {
+            player: 2,
+            hp: 12,
+            attack: [3, 5],
+            speed: 2
+        };
+        let mut res = game.set_content(1, 0, Content::Wall(Wall {}));
+        println!("{}", res.is_ok());
+        res = game.set_unit(0, 0, wolf);
+        println!("{}", res.is_ok());
+        res = game.set_unit(2, 1, zombie);
+        println!("{}", res.is_ok());
+        let game_string = serde_json::to_string(&game).unwrap();
+        println!("{}", game_string);
+        let hex = game.field.get_hex(2, 1).unwrap();
+        let z = hex.unit.clone();
+        let z_string = serde_json::to_string(&z).unwrap();
+        println!("{}", z_string);
+        let hex_string = serde_json::to_string(&hex).unwrap();
+        println!("{}", hex_string);
+    }
 }
