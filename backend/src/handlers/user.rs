@@ -55,3 +55,17 @@ pub async fn get_users(data: Data<UserStorage>) -> Result<Json<UsersResponse>, A
     let users = block(move || Ok(get_all(&data))).await?;
     respond_json(users.into())
 }
+
+
+#[cfg(test)]
+mod test {
+    use crate::handlers::user::get_user;
+    use crate::database::load_user_storage;
+    use actix_web::web::Path;
+
+    #[test]
+    fn new() {
+        let users = load_user_storage();
+        get_user(users, Path("e4bc0684-b1b5-49aa-9990-a6948bf4ae47"));
+    }
+}

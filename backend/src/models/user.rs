@@ -38,3 +38,14 @@ pub fn find(storage: &UserStorage, id: Uuid) -> Option<User> {
 pub fn get_all(storage: &UserStorage) -> Vec<User> {
     storage.0.clone()
 }
+
+#[cfg(test)]
+mod test {
+    use crate::models::user::create_random_user;
+
+    #[test]
+    fn new() {
+        let u = create_random_user();
+        println!("Adding user {:?}", u);
+    }
+}

@@ -8,3 +8,15 @@ pub fn hash(password: &str) -> String {
         .map(|b| format!("{:02x}", b))
         .collect()
 }
+
+
+#[cfg(test)]
+mod test {
+    use crate::auth::hash;
+
+    #[test]
+    fn new() {
+        let s = hash("lalala");
+        println!("{}", s);
+    }
+}

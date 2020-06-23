@@ -43,3 +43,33 @@ pub fn add_user_storage(cfg: &mut web::ServiceConfig) {
     info!("Adding user storage...");
     cfg.data(USER_STORAGE.clone());
 }
+
+
+#[cfg(test)]
+mod test {
+    use crate::database::{create_user_storage, load_user_storage, add_user_storage};
+    use std::fs;
+    use std::io::Write;
+    use actix_web::web::ServiceConfig;
+
+    #[test]
+    fn create_user_storage_test() {
+        let users = create_user_storage(2);
+        println!("{:?}", users);
+    }
+
+    #[test]
+    fn save_user_storage() {
+        let users = create_user_storage(2);
+        let path = "users_test.json";
+        let string = serde_json::to_string(&users).unwrap();
+        let mut file = fs::File::create(path).unwrap();
+        file.write_all(&string.into_bytes()).unwrap();
+    }
+
+    #[test]
+    fn load_user_storage_test() {
+        let users = load_user_storage();
+        println!("{:?}", users);
+    }
+}
