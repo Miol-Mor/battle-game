@@ -11,6 +11,10 @@ export class Game {
         this.app = null;
         this.grid = null;
 
+        // array of game states
+        this.STATES = {PREPARE: 'prepare', TURN: 'turn', END: 'end'};
+        this.state = this.STATES.PREPARE;
+
         // graphic constants
         this.BACKGROUND_COLOR = 0xd6b609;
     }
@@ -24,8 +28,12 @@ export class Game {
         let field_data = JSON.parse(data);
         this.create_grid(field_data);
         this.set_units_start_pos(field_data);
+
+        this.state = this.STATES.TURN;
+        this.turn();
     }
 
+    // State: prepare
     // private
     create_stage() {
         let app = new PIXI.Application({
@@ -138,4 +146,22 @@ export class Game {
         from_hex.unset_unit();
         to_hex.set_unit(unit);
     }
+
+
+    // State: turn
+    turn() {
+        console.log('turn');for (let y = 0; y < this.grid.row_n; y++) {
+            for (let x = 0; x < this.grid.col_n; x++) {
+                let hex = this.grid.hexes[y][x];
+                hex.interactive = true;
+                hex.hitArea = hex.polygon;
+                hex.on('click', this.click_hex);
+            }
+        }
+    }
+
+    click_hex(event) {
+        console.log('clicked', event.target.coords);
+    }
+
 }
