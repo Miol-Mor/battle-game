@@ -4,9 +4,7 @@ import { Unit } from './unit';
 
 
 export class Game {
-    // players_num - number of players (for the future)
-    constructor(players_num = 2) {
-        this.players_num = players_num;
+    constructor() {
         // app - PIXI aplication, used for this game
         this.app = null;
         // grid - grid for this game (Hex_grid)
@@ -14,6 +12,11 @@ export class Game {
 
         // Websocket we use to contact with server
         this.socket = null;
+
+        // players_num - number of players (for the future)
+        this.players_num = 2;
+        // my_num - number of player using this client
+        this.my_num = 1;
 
         // array of game states
         this.STATES = {
@@ -209,6 +212,7 @@ export class Game {
         await this.load_images();
         this.create_grid(field_data);
         this.set_units_start_pos(field_data);
+        this.create_info();
         this.set_hex_click_handlers();
 
         // simulate server activity
@@ -217,7 +221,7 @@ export class Game {
 
     // private
     create_stage() {
-        let app = new PIXI.Application({
+        let app = new PIXI.Application ({
             antialias: true,
             transparent: false,
             resolution: 1
@@ -278,6 +282,25 @@ export class Game {
     }
 
     // private
+    create_info() {
+        this.info = new PIXI.Text();
+        this.app.stage.addChild(this.info);
+        this.clear_info();
+    }
+
+    // private
+    clear_info() {
+        this.info.text = 'Info:\n';
+    }
+
+    set_info(params) {
+        this.clear_info();
+        for (let [key, value] of Object.entries(params)) {
+            this.info.text += `${key}: ${value}\n`;
+        }
+    }
+
+    // private
     set_hex_click_handlers() {
         for (let y = 0; y < this.grid.row_n; y++) {
             for (let x = 0; x < this.grid.col_n; x++) {
@@ -285,7 +308,18 @@ export class Game {
                 hex.interactive = true;
                 hex.hitArea = hex.polygon;
                 hex.on('click', this.process_click.bind(this));
+                hex.on('mouseover', this.show_tooltip.bind(this));
             }
+        }
+    }
+
+    // private
+    show_tooltip(event) {
+        if (event.target.unit !== null) {
+            this.set_info(event.target.unit.params);
+        }
+        else {
+            this.clear_info();
         }
     }
 
