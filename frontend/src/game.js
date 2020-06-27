@@ -360,15 +360,23 @@ export class Game {
 
     // private
     send_attack() {
-        this.socket.send(
-            JSON.stringify({
+        let coords = this.find_unit(2);
+        let params = this.grid.hexes[coords.y][coords.x].unit.params;
+        this.socket.send (
+            JSON.stringify ({
                 "cmd": "change",
                 "type": "attack",
                 "coords": {
                     "from": this.cur_move.to,
                     "to": this.cur_attack
                 },
-                "changes": null
+                "changes": {
+                    "hurt": [
+                        {"x":coords.x,"y":coords.y,"unit":{
+                            "player":params.player,"hp":params.hp - 1,"attack":params.attack,"speed":params.speed
+                        }}
+                    ]
+                }
             })
         );
     }
@@ -376,7 +384,6 @@ export class Game {
 
     // Change field functions
     // private
-    // states: move_to or attack
     redraw_field(data) {
         console.log('redraw field');
         // bad switch, need to switch by data.type
@@ -394,6 +401,18 @@ export class Game {
                     });
                 }
             break;
+        }
+    }
+
+    // private
+    change_hex(data) {
+        console.log(data);
+        let hex = this.grid.hexes[data.y][data.x];
+        if (data.content) {
+            hex.set_content(data.content);
+        }
+        if (data.unit) {
+            hex.change_unit(data.unit);
         }
     }
 
