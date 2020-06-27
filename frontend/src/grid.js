@@ -1,18 +1,22 @@
 import * as PIXI from 'pixi.js';
 
 class Hex extends PIXI.Graphics {
-    constructor(y, x, side, border_width, border_color) {
+    constructor(y, x, side, BORDER_WIDTH, BORDER_COLOR, FILL_COLOR) {
         super();
         this.coords = {y: y, x: x};
-        this.lineStyle(border_width, border_color);
+        this.BORDER_WIDTH = BORDER_WIDTH;
+        this.BORDER_COLOR = BORDER_COLOR;
+        this.FILL_COLOR = FILL_COLOR;
 
         // array of points of hex to draw
         this.points = this.hex_points(side);
         //Use drawPolygon to define the hex as a path array of x/y positions
         this.polygon = new PIXI.Polygon(this.points);
+        this.lineStyle(this.BORDER_WIDTH, this.BORDER_COLOR);
         this.drawPolygon(this.polygon);
 
         this.unit = null;
+        this.content = null;
     }
 
     // return array of points of hex with center in (0, 0) point and given side
@@ -28,6 +32,19 @@ class Hex extends PIXI.Graphics {
         return points;
     }
 
+    fill() {
+        this.clear();
+        this.lineStyle(this.BORDER_WIDTH, this.BORDER_COLOR, 1);
+        this.beginFill(this.FILL_COLOR);
+        this.drawPolygon(this.points);
+        this.endFill();
+    }
+
+    set_content(content) {
+        this.content = content;
+        this.fill();
+    }
+
     // set and draw unit here
     set_unit(unit) {
         this.unit = unit;
@@ -41,6 +58,10 @@ class Hex extends PIXI.Graphics {
 
     unset_unit() {
         this.unit = null;
+    }
+
+    change_unit(params) {
+        this.unit.params = params;
     }
 }
 
@@ -75,7 +96,7 @@ export class Hex_grid {
         for (let y = 0; y < this.row_n; y++) {
             this.hexes[y] = [];
             for (let x = 0; x < this.col_n; x++) {
-                let cur_hex = new Hex(y, x, this.hex_size, this.BORDER_WIDTH, this.BORDER_COLOR);
+                let cur_hex = new Hex(y, x, this.hex_size, this.BORDER_WIDTH, this.BORDER_COLOR, this.FILL_COLOR);
 
                 let y_offset = side;
                 let x_offset = side * Math.sqrt(3) / 2;
@@ -92,23 +113,13 @@ export class Hex_grid {
         }
     }
 
-    // fill hex in row y, column x with FILLCOLOR
-    fill_hex(y, x) {
-        let cur_hex = this.hexes[y][x];
-
-        cur_hex.clear();
-        cur_hex.lineStyle(1, this.BORDER_COLOR, 1);
-        cur_hex.beginFill(this.FILL_COLOR);
-        cur_hex.drawPolygon(cur_hex.points);
-        cur_hex.endFill();
-    }
-
-    // just for debug
+    // dev
+    // private
     draw_hex(y, x) {
         let cur_hex = this.hexes[y][x];
 
         cur_hex.clear();
-        cur_hex.lineStyle(1, this.BORDER_COLOR, 1);
+        cur_hex.lineStyle(this.BORDER_WIDTH, this.BORDER_COLOR, 1);
         cur_hex.beginFill(0xd6b609);
         cur_hex.drawPolygon(cur_hex.points);
         cur_hex.endFill();
