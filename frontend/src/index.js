@@ -17,7 +17,6 @@ async function start() {
     await game.start();
 
     // inspect all our units
-    console.log('All units: ');
     for (let y = 0; y < game.grid.row_n; y++) {
         for (let x = 0; x < game.grid.col_n; x++) {
             if (game.grid.hexes[y][x].unit) {
@@ -27,5 +26,5 @@ async function start() {
         }
     }
 
-    // game.move_unit(1, 3, 5, 0);
+    game.move_unit(1, 3, 5, 0);
 }
