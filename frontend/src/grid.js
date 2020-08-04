@@ -79,7 +79,7 @@ export class Hex_grid {
 
                 let y_offset = side;
                 let x_offset = side * Math.sqrt(3) / 2;
-                if (y % 2 === 0) {
+                if (y % 2 == 0) {
                     x_offset = side * Math.sqrt(3);
                 }
                 let x_coord = (side * Math.sqrt(3)) * x + x_offset;
