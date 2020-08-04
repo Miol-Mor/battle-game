@@ -34,90 +34,6 @@ export class Game {
 
         // graphic constants
         this.BACKGROUND_COLOR = 0xd6b609;
-
-        // set map of commands
-        this.cmd_map = {};
-        this.cmd_map.field = function(data) {
-            this.check_state(this.STATES.PREPARE);
-            this.create_field(data);
-            this.change_state(this.STATES.WAIT);
-        };
-
-        this.cmd_map.turn = function(data) {
-            this.check_state(this.STATES.WAIT);
-            this.change_state(this.STATES.MOVE_FROM);
-        };
-
-        this.cmd_map.change = function(data) {
-            this.check_state(this.STATES.MOVE_TO, this.STATES.ATTACK, this.STATES.WAIT);
-            this.redraw_field(data);
-            switch (this.state) {
-                case this.STATES.MOVE_TO:
-                    this.change_state(this.STATES.ATTACK);
-                break;
-
-                case this.STATES.ATTACK:
-                    this.change_state(this.STATES.WAIT);
-
-                    // and more simulation of server activity
-                    this.socket.send (
-                        JSON.stringify ({
-                            "cmd": "change",
-                            "type": "move",
-                            "coords": [
-                                this.find_unit(2),
-                                this.find_empty_hex()
-                            ]
-                        })
-                    );
-
-                    let coords = this.find_unit(1);
-                    let params = this.grid.hexes[coords.y][coords.x].unit.params;
-                    this.socket.send (
-                        JSON.stringify ({
-                            "cmd": "change",
-                            "type": "attack",
-                            "coords": {
-                                "from": this.find_unit(2),
-                                "to": this.find_unit(1)
-                            },
-                            "changes": {
-                                "hurt": [
-                                    {"x":coords.x,"y":coords.y,"unit":{
-                                        "player":params.player,"hp":params.hp - 3,
-                                        "attack":params.attack,"speed":params.speed
-                                    }}
-                                ]
-                            }
-                        })
-                    );
-
-                    this.socket.send(`{"cmd": "turn"}`);
-                break;
-            }
-        };
-
-        // just a crutch
-        // my message is better
-        this.cmd_map.undefined = function(data) {
-            console.log('default message');
-            this.socket.send (
-                `{"cmd": "field", "row_n":3,"col_n":4, "field":{"hexes":[
-                    {"x":0,"y":0,"unit":{"player":1,"hp":10,"attack":[1,2],"speed":1}},
-                    {"x":0,"y":1},
-                    {"x":0,"y":2},
-                    {"x":1,"y":0},
-                    {"x":1,"y":1,"content":{"type":"wall"}},
-                    {"x":1,"y":1},
-                    {"x":2,"y":0,"content":{"type":"wall"}},
-                    {"x":2,"y":1},
-                    {"x":2,"y":2},
-                    {"x":3,"y":0},
-                    {"x":3,"y":1},
-                    {"x":3,"y":2,"unit":{"player":2,"hp":5,"attack":[1,4],"speed":2}}
-                ]}}`
-            );
-        };
     }
 
     // (needed, because constructor cannot be async)
@@ -174,7 +90,88 @@ export class Game {
         let data = JSON.parse(event.data);
         console.log(data);
         // TODO: we need to wait here all previous actions done
-        this.cmd_map[data.cmd].call(this, data);
+        switch (data.cmd) {
+            case 'field':
+                this.check_state(this.STATES.PREPARE);
+                this.create_field(data);
+                this.change_state(this.STATES.WAIT);
+            break;
+
+            case 'turn':
+                this.check_state(this.STATES.WAIT);
+                this.change_state(this.STATES.MOVE_FROM);
+            break;
+
+            case 'change':
+                this.check_state(this.STATES.MOVE_TO, this.STATES.ATTACK, this.STATES.WAIT);
+                this.redraw_field(data);
+                switch (this.state) {
+                    case this.STATES.MOVE_TO:
+                        this.change_state(this.STATES.ATTACK);
+                    break;
+
+                    case this.STATES.ATTACK:
+                        this.change_state(this.STATES.WAIT);
+
+                        // and more simulation of server activity
+                        this.socket.send (
+                            JSON.stringify ({
+                                "cmd": "change",
+                                "type": "move",
+                                "coords": [
+                                    this.find_unit(2),
+                                    this.find_empty_hex()
+                                ]
+                            })
+                        );
+
+                        let coords = this.find_unit(1);
+                        let params = this.grid.hexes[coords.y][coords.x].unit.params;
+                        this.socket.send (
+                            JSON.stringify ({
+                                "cmd": "change",
+                                "type": "attack",
+                                "coords": {
+                                    "from": this.find_unit(2),
+                                    "to": this.find_unit(1)
+                                },
+                                "changes": {
+                                    "hurt": [
+                                        {"x":coords.x,"y":coords.y,"unit":{
+                                            "player":params.player,"hp":params.hp - 3,
+                                            "attack":params.attack,"speed":params.speed
+                                        }}
+                                    ]
+                                }
+                            })
+                        );
+
+                        this.socket.send(`{"cmd": "turn"}`);
+                    break;
+                }
+            break;
+
+            // just a crutch
+            // my message is better
+            default:
+                console.log('default message');
+                this.socket.send (
+                    `{"cmd": "field", "row_n":3,"col_n":4,"field":{"hexes":[
+                        {"x":0,"y":0,"unit":{"player":1,"hp":10,"attack":[1,2],"speed":1}},
+                        {"x":0,"y":1},
+                        {"x":0,"y":2},
+                        {"x":1,"y":0},
+                        {"x":1,"y":1,"content":{"type":"wall"}},
+                        {"x":1,"y":1},
+                        {"x":2,"y":0,"content":{"type":"wall"}},
+                        {"x":2,"y":1},
+                        {"x":2,"y":2},
+                        {"x":3,"y":0},
+                        {"x":3,"y":1},
+                        {"x":3,"y":2,"unit":{"player":2,"hp":5,"attack":[1,4],"speed":2}}
+                    ]}}`);
+            break;
+        }
     }
 
     // process users clicks
