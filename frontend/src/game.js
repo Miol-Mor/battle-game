@@ -254,10 +254,8 @@ export class Game {
 
         let hexes = field_data.field.hexes;
         for (let i = 0; i < field_data.row_n * field_data.col_n; i++) {
-            if (hexes[i].content !== undefined) {
-                if (hexes[i].content.type === 'wall') {
-                    grid.hexes[hexes[i].y][hexes[i].x].set_content('wall');
-                }
+            if (hexes[i].content && hexes[i].content.type === 'wall') {
+                grid.hexes[hexes[i].y][hexes[i].x].set_content('wall');
             }
         }
 
@@ -394,12 +392,10 @@ export class Game {
             case 'attack':
                 console.log('attack!!! charge!!!');
                 // animate attack
-                if (data.changes) {
-                    if (data.changes.hurt) {
-                        data.changes.hurt.forEach(el => {
-                            this.change_hex(el);
-                        });
-                    }
+                if (data.changes && data.changes.hurt) {
+                    data.changes.hurt.forEach(el => {
+                        this.change_hex(el);
+                    });
                 }
             break;
         }
@@ -448,10 +444,8 @@ export class Game {
         for (let y = 0; y < this.grid.row_n; y++) {
             for (let x = 0; x < this.grid.col_n; x++) {
                 let unit = this.grid.hexes[y][x].unit;
-                if (unit) {
-                    if (unit.params.player === player) {
-                        return this.grid.hexes[y][x].coords;
-                    }
+                if (unit && unit.params.player === player) {
+                    return this.grid.hexes[y][x].coords;
                 }
             }
         }
