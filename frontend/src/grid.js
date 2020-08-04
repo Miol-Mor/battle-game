@@ -1,16 +1,14 @@
 import * as PIXI from 'pixi.js';
 
 class Hex extends PIXI.Graphics {
-    constructor(y, x, side, border_width, border_color) {
+    constructor(side, border_width, border_color) {
         super();
-        this.coords = {y: y, x: x};
         this.lineStyle(border_width, border_color);
 
         // array of points of hex to draw
         this.points = this.hex_points(side);
         //Use drawPolygon to define the hex as a path array of x/y positions
-        this.polygon = new PIXI.Polygon(this.points);
-        this.drawPolygon(this.polygon);
+        this.drawPolygon(this.points);
 
         this.unit = null;
     }
@@ -75,7 +73,7 @@ export class Hex_grid {
         for (let y = 0; y < this.row_n; y++) {
             this.hexes[y] = [];
             for (let x = 0; x < this.col_n; x++) {
-                let cur_hex = new Hex(y, x, this.hex_size, this.BORDER_WIDTH, this.BORDER_COLOR);
+                let cur_hex = new Hex(this.hex_size, this.BORDER_WIDTH, this.BORDER_COLOR);
 
                 let y_offset = side;
                 let x_offset = side * Math.sqrt(3) / 2;
