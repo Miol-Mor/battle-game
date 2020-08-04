@@ -119,30 +119,21 @@ export class Game {
                                 "cmd": "change",
                                 "type": "move",
                                 "coords": [
-                                    this.find_unit(2),
-                                    this.find_empty_hex()
+                                    this.cur_move.to,
+                                    {y: 0, x: 0}
                                 ]
                             })
                         );
 
-                        let coords = this.find_unit(1);
-                        let params = this.grid.hexes[coords.y][coords.x].unit.params;
                         this.socket.send (
                             JSON.stringify ({
                                 "cmd": "change",
                                 "type": "attack",
                                 "coords": {
-                                    "from": this.find_unit(2),
-                                    "to": this.find_unit(1)
+                                    "from": this.cur_move.to,
+                                    "to": this.cur_attack
                                 },
-                                "changes": {
-                                    "hurt": [
-                                        {"x":coords.x,"y":coords.y,"unit":{
-                                            "player":params.player,"hp":params.hp - 3,
-                                            "attack":params.attack,"speed":params.speed
-                                        }}
-                                    ]
-                                }
+                                "changes": null
                             })
                         );
 
@@ -156,19 +147,11 @@ export class Game {
             default:
                 console.log('default message');
                 this.socket.send (
-                    `{"cmd": "field", "row_n":3,"col_n":4,"field":{"hexes":[
-                        {"x":0,"y":0,"unit":{"player":1,"hp":10,"attack":[1,2],"speed":1}},
+                    `{"cmd": "field", "row_n":2,"col_n":2,"field":{"hexes":[
+                        {"x":0,"y":0,"unit":{"player":1,"hp":1,"attack":[1,2],"speed":1}},
                         {"x":0,"y":1},
-                        {"x":0,"y":2},
                         {"x":1,"y":0},
-                        {"x":1,"y":1,"content":{"type":"wall"}},
-                        {"x":1,"y":1},
-                        {"x":2,"y":0,"content":{"type":"wall"}},
-                        {"x":2,"y":1},
-                        {"x":2,"y":2},
-                        {"x":3,"y":0},
-                        {"x":3,"y":1},
-                        {"x":3,"y":2,"unit":{"player":2,"hp":5,"attack":[1,4],"speed":2}}
+                        {"x":1,"y":1,"content":{"type":"wall"}}
                     ]}}`);
             break;
         }
@@ -256,7 +239,7 @@ export class Game {
         for (let i = 0; i < field_data.row_n * field_data.col_n; i++) {
             if (hexes[i].content !== undefined) {
                 if (hexes[i].content.type === 'wall') {
-                    grid.hexes[hexes[i].y][hexes[i].x].set_content('wall');
+                    grid.fill_hex(hexes[i].y, hexes[i].x);
                 }
             }
         }
@@ -359,23 +342,15 @@ export class Game {
 
     // private
     send_attack() {
-        let coords = this.find_unit(2);
-        let params = this.grid.hexes[coords.y][coords.x].unit.params;
-        this.socket.send (
-            JSON.stringify ({
+        this.socket.send(
+            JSON.stringify({
                 "cmd": "change",
                 "type": "attack",
                 "coords": {
                     "from": this.cur_move.to,
                     "to": this.cur_attack
                 },
-                "changes": {
-                    "hurt": [
-                        {"x":coords.x,"y":coords.y,"unit":{
-                            "player":params.player,"hp":params.hp - 1,"attack":params.attack,"speed":params.speed
-                        }}
-                    ]
-                }
+                "changes": null
             })
         );
     }
@@ -383,6 +358,7 @@ export class Game {
 
     // Change field functions
     // private
+    // states: move_to or attack
     redraw_field(data) {
         console.log('redraw field');
         // bad switch, need to switch by data.type
@@ -394,26 +370,8 @@ export class Game {
             case 'attack':
                 console.log('attack!!! charge!!!');
                 // animate attack
-                if (data.changes) {
-                    if (data.changes.hurt) {
-                        data.changes.hurt.forEach(el => {
-                            this.change_hex(el);
-                        });
-                    }
-                }
+                // change units params
             break;
-        }
-    }
-
-    // private
-    change_hex(data) {
-        console.log(data);
-        let hex = this.grid.hexes[data.y][data.x];
-        if (data.content) {
-            hex.set_content(data.content);
-        }
-        if (data.unit) {
-            hex.change_unit(data.unit);
         }
     }
 
@@ -440,35 +398,5 @@ export class Game {
 
         from_hex.unset_unit();
         to_hex.set_unit(unit);
-    }
-
-    // dev
-    // private
-    find_unit(player) {
-        for (let y = 0; y < this.grid.row_n; y++) {
-            for (let x = 0; x < this.grid.col_n; x++) {
-                let unit = this.grid.hexes[y][x].unit;
-                if (unit) {
-                    if (unit.params.player === player) {
-                        return this.grid.hexes[y][x].coords;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    // dev
-    // private
-    find_empty_hex() {
-        for (let y = 0; y < this.grid.row_n; y++) {
-            for (let x = 0; x < this.grid.col_n; x++) {
-                let hex = this.grid.hexes[y][x];
-                if (! hex.content && ! hex.unit) {
-                    return hex.coords;
-                }
-            }
-        }
-        return null;
     }
 }
