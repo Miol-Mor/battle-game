@@ -96,28 +96,6 @@ export class Game {
                 break;
             }
         };
-
-        // just a crutch
-        // my message is better
-        this.cmd_map.undefined = function(data) {
-            console.log('default message');
-            this.socket.send (
-                `{"cmd": "field", "row_n":3,"col_n":4, "field":{"hexes":[
-                    {"x":0,"y":0,"unit":{"player":1,"hp":10,"attack":[1,2],"speed":1}},
-                    {"x":0,"y":1},
-                    {"x":0,"y":2},
-                    {"x":1,"y":0},
-                    {"x":1,"y":1,"content":{"type":"wall"}},
-                    {"x":1,"y":1},
-                    {"x":2,"y":0,"content":{"type":"wall"}},
-                    {"x":2,"y":1},
-                    {"x":2,"y":2},
-                    {"x":3,"y":0},
-                    {"x":3,"y":1},
-                    {"x":3,"y":2,"unit":{"player":2,"hp":5,"attack":[1,4],"speed":2}}
-                ]}}`
-            );
-        };
     }
 
     // (needed, because constructor cannot be async)
