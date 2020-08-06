@@ -6,6 +6,7 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct Game {
+    cmd: String,
     row_n: u32,
     col_n: u32,
     field: Grid,
@@ -14,6 +15,7 @@ pub struct Game {
 impl Game {
     pub fn new(row_n: u32, col_n: u32) -> Game {
         Game {
+            cmd: String::from("field"),
             row_n,
             col_n,
             field: Grid::new(row_n, col_n),
@@ -128,7 +130,7 @@ mod test {
         assert_eq!(
             game_string,
             format!(
-                "{{\"row_n\":1,\"col_n\":1,\"field\":{}}}",
+                "{{\"cmd\":\"field\",\"row_n\":1,\"col_n\":1,\"field\":{}}}",
                 serde_json::to_string(&game.field).unwrap()
             ),
         );
