@@ -48,52 +48,56 @@ export class Game {
             this.change_state(this.STATES.MOVE_FROM);
         };
 
-        this.cmd_map.change = function(data) {
-            this.check_state(this.STATES.MOVE_TO, this.STATES.ATTACK, this.STATES.WAIT);
+        this.cmd_map.moving = function(data) {
+            this.check_state(this.STATES.MOVE_TO, this.STATES.WAIT);
+            data.type = 'move';
             this.redraw_field(data);
-            switch (this.state) {
-                case this.STATES.MOVE_TO:
-                    this.change_state(this.STATES.ATTACK);
-                break;
+            if (this.state === this.STATES.MOVE_TO) {
+                this.change_state(this.STATES.ATTACK);
+            }
+        };
 
-                case this.STATES.ATTACK:
-                    this.change_state(this.STATES.WAIT);
+        this.cmd_map.attacking = function(data) {
+            this.check_state(this.STATES.ATTACK, this.STATES.WAIT);
+            data.type = 'attack';
+            this.redraw_field(data);
+            if (this.state === this.STATES.ATTACK) {
+                this.change_state(this.STATES.WAIT);
 
-                    // and more simulation of server activity
-                    this.socket.send (
-                        JSON.stringify ({
-                            "cmd": "change",
-                            "type": "move",
-                            "coords": [
-                                this.find_unit(2),
-                                this.find_empty_hex()
-                            ]
-                        })
-                    );
+                // // and more simulation of server activity
+                // this.socket.send (
+                //     JSON.stringify ({
+                //         "cmd": "change",
+                //         "type": "move",
+                //         "coords": [
+                //             this.find_unit(2),
+                //             this.find_empty_hex()
+                //         ]
+                //     })
+                // );
 
-                    let coords = this.find_unit(1);
-                    let params = this.grid.hexes[coords.y][coords.x].unit.params;
-                    this.socket.send (
-                        JSON.stringify ({
-                            "cmd": "change",
-                            "type": "attack",
-                            "coords": {
-                                "from": this.find_unit(2),
-                                "to": this.find_unit(1)
-                            },
-                            "changes": {
-                                "hurt": [
-                                    {"x":coords.x,"y":coords.y,"unit":{
-                                        "player":params.player,"hp":params.hp - 3,
-                                        "attack":params.attack,"speed":params.speed
-                                    }}
-                                ]
-                            }
-                        })
-                    );
+                // let coords = this.find_unit(1);
+                // let params = this.grid.hexes[coords.y][coords.x].unit.params;
+                // this.socket.send (
+                //     JSON.stringify ({
+                //         "cmd": "change",
+                //         "type": "attack",
+                //         "coords": {
+                //             "from": this.find_unit(2),
+                //             "to": this.find_unit(1)
+                //         },
+                //         "changes": {
+                //             "hurt": [
+                //                 {"x":coords.x,"y":coords.y,"unit":{
+                //                     "player":params.player,"hp":params.hp - 3,
+                //                     "attack":params.attack,"speed":params.speed
+                //                 }}
+                //             ]
+                //         }
+                //     })
+                // );
 
-                    this.socket.send(`{"cmd": "turn"}`);
-                break;
+                // this.socket.send(`{"cmd": "turn"}`);
             }
         };
     }
@@ -194,7 +198,7 @@ export class Game {
         this.set_hex_click_handlers();
 
         // simulate server activity
-        this.socket.send(`{"cmd": "turn"}`);
+        // this.socket.send(`{"cmd": "turn", "zombie": "zombie"}`);
     }
 
     // private
@@ -326,35 +330,20 @@ export class Game {
     send_move() {
         this.socket.send (
             JSON.stringify ({
-                "cmd": "change",
-                "type": "move",
-                "coords": [
-                    this.cur_move.from,
-                    this.cur_move.to
-                ]
+                "cmd": "move",
+                "from": this.cur_move.from,
+                "to": this.cur_move.to
             })
         );
     }
 
     // private
     send_attack() {
-        let coords = this.find_unit(2);
-        let params = this.grid.hexes[coords.y][coords.x].unit.params;
         this.socket.send (
             JSON.stringify ({
-                "cmd": "change",
-                "type": "attack",
-                "coords": {
-                    "from": this.cur_move.to,
-                    "to": this.cur_attack
-                },
-                "changes": {
-                    "hurt": [
-                        {"x":coords.x,"y":coords.y,"unit":{
-                            "player":params.player,"hp":params.hp - 1,"attack":params.attack,"speed":params.speed
-                        }}
-                    ]
-                }
+                "cmd": "attack",
+                "from": this.cur_move.to,
+                "to": this.cur_attack
             })
         );
     }
