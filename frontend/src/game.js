@@ -63,41 +63,6 @@ export class Game {
             this.redraw_field(data);
             if (this.state === this.STATES.ATTACK) {
                 this.change_state(this.STATES.WAIT);
-
-                // // and more simulation of server activity
-                // this.socket.send (
-                //     JSON.stringify ({
-                //         "cmd": "change",
-                //         "type": "move",
-                //         "coords": [
-                //             this.find_unit(2),
-                //             this.find_empty_hex()
-                //         ]
-                //     })
-                // );
-
-                // let coords = this.find_unit(1);
-                // let params = this.grid.hexes[coords.y][coords.x].unit.params;
-                // this.socket.send (
-                //     JSON.stringify ({
-                //         "cmd": "change",
-                //         "type": "attack",
-                //         "coords": {
-                //             "from": this.find_unit(2),
-                //             "to": this.find_unit(1)
-                //         },
-                //         "changes": {
-                //             "hurt": [
-                //                 {"x":coords.x,"y":coords.y,"unit":{
-                //                     "player":params.player,"hp":params.hp - 3,
-                //                     "attack":params.attack,"speed":params.speed
-                //                 }}
-                //             ]
-                //         }
-                //     })
-                // );
-
-                // this.socket.send(`{"cmd": "turn"}`);
             }
         };
     }
@@ -196,9 +161,6 @@ export class Game {
         this.set_units_start_pos(field_data);
         this.create_info();
         this.set_hex_click_handlers();
-
-        // simulate server activity
-        // this.socket.send(`{"cmd": "turn", "zombie": "zombie"}`);
     }
 
     // private
@@ -353,7 +315,6 @@ export class Game {
     // private
     redraw_field(data) {
         console.log('redraw field');
-        // bad switch, need to switch by data.type
         switch(data.type) {
             case 'move':
                 this.move_unit(data.coords[0].y, data.coords[0].x, data.coords[1].y, data.coords[1].x);
