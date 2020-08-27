@@ -136,14 +136,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                 Err(error) => ctx.text(error),
             }
 
-            debug!("Two clients connected, sending game!");
-            self.broadcast(&game);
-            let message = api::common::Message::new(api::response::CMD_TURN);
-            ctx.address()
-                .do_send(Msg(serde_json::to_string(&message).unwrap()));
-            *self.app_state.game.lock().unwrap() = game;
-        } else if clients_num > 2 {
-            ctx.text("{\"cmd\": \"GFY! :D\"}");
+            if clients_num == 2 {
+                debug!("Two clients connected, sending game!");
+                self.broadcast(&game);
+                let message = api::common::Message::new(api::response::CMD_TURN);
+                ctx.address().do_send(Msg(serde_json::to_string(&message).unwrap()));
+                *self.app_state.game.lock().unwrap() = game;
+            } else if clients_num > 2 {
+                ctx.text("{\"cmd\": \"GFY! :D\"}");
+            }
         }
     }
 
