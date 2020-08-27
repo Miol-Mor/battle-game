@@ -65,6 +65,10 @@ export class Game {
                 this.change_state(this.STATES.WAIT);
             }
         };
+
+        this.cmd_map['GFY! :D'] = function(data) {
+            alert('GFY! :D');
+        };
     }
 
     // (needed, because constructor cannot be async)
