@@ -29,11 +29,19 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
-async fn index(req: HttpRequest, stream: web::Payload, data: web::Data<appstate::AppState>) -> Result<HttpResponse, Error> {
-    let res = ws::start(websocket::Websocket {
-        self_addr: None,
-        app_state: data.clone(),
-    }, &req, stream);
+async fn index(
+    req: HttpRequest,
+    stream: web::Payload,
+    data: web::Data<appstate::AppState>,
+) -> Result<HttpResponse, Error> {
+    let res = ws::start(
+        websocket::Websocket {
+            self_addr: None,
+            app_state: data.clone(),
+        },
+        &req,
+        stream,
+    );
 
     let cnt = data.clients.lock().unwrap();
     debug!("Number of clients {}", cnt.len());
@@ -44,7 +52,7 @@ async fn index(req: HttpRequest, stream: web::Payload, data: web::Data<appstate:
 async fn main() -> std::io::Result<()> {
     pretty_env_logger::init();
     let data = web::Data::new(appstate::AppState {
-        clients : Mutex::new(vec![]),
+        clients: Mutex::new(vec![]),
     });
     HttpServer::new(move || {
         App::new()

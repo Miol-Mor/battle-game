@@ -1,4 +1,4 @@
-use actix::{Actor, StreamHandler, Handler, AsyncContext, Message, Addr};
+use actix::{Actor, Addr, AsyncContext, Handler, Message, StreamHandler};
 use actix_web::web;
 use actix_web_actors::ws;
 
@@ -38,7 +38,9 @@ impl Websocket {
         let clients = self.app_state.clients.lock().unwrap();
         debug!("Sending turn to other player");
         for c in &*clients {
-            if *c == *self.self_addr.as_ref().unwrap() { continue; }
+            if *c == *self.self_addr.as_ref().unwrap() {
+                continue;
+            }
             c.do_send(Msg(serde_json::to_string(&message).unwrap()));
             break;
         }
@@ -122,7 +124,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
             debug!("Two clients connected, sending game!");
             self.broadcast(game);
             let message = api::common::Message::new(api::response::CMD_TURN);
-            ctx.address().do_send(Msg(serde_json::to_string(&message).unwrap()));
+            ctx.address()
+                .do_send(Msg(serde_json::to_string(&message).unwrap()));
         } else if clients_num > 2 {
             ctx.text("{\"cmd\": \"GFY! :D\"}");
         }
