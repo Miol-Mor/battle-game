@@ -1,18 +1,61 @@
-use actix::{Actor, StreamHandler};
+use actix::{Actor, StreamHandler, Handler, AsyncContext, Message, Addr};
+use actix_web::web;
 use actix_web_actors::ws;
+
+use serde::Serialize;
 
 use super::game::Game;
 use super::game_objects::hex_objects::content::Content;
 use super::game_objects::hex_objects::wall::Wall;
 use super::game_objects::unit::Unit;
+use crate::appstate::AppState;
 
 use super::api;
 
 /// Define http actor
-pub struct Websocket;
+#[derive(Debug)]
+pub struct Websocket {
+    pub self_addr: Option<Addr<Websocket>>,
+    pub app_state: web::Data<AppState>,
+}
+
+#[derive(Message, Debug)]
+#[rtype(result = "()")]
+pub struct Msg(pub String);
+
+impl Websocket {
+    fn broadcast<T: Serialize>(&self, msg: T) {
+        let clients = self.app_state.clients.lock().unwrap();
+        let m = serde_json::to_string(&msg).unwrap();
+        debug!("Sending {} to all clients", m);
+        for c in &*clients {
+            c.do_send(Msg(m.clone()));
+        }
+    }
+
+    fn send_turn(&self) {
+        let message = api::common::Message::new(api::response::CMD_TURN);
+        let clients = self.app_state.clients.lock().unwrap();
+        debug!("Sending turn to other player");
+        for c in &*clients {
+            if *c == *self.self_addr.as_ref().unwrap() { continue; }
+            c.do_send(Msg(serde_json::to_string(&message).unwrap()));
+            break;
+        }
+    }
+}
 
 impl Actor for Websocket {
     type Context = ws::WebsocketContext<Self>;
+}
+
+impl Handler<Msg> for Websocket {
+    type Result = ();
+
+    fn handle(&mut self, msg: Msg, ctx: &mut Self::Context) {
+        debug!("Sending message {:?}!", msg);
+        ctx.text(msg.0);
+    }
 }
 
 /// Handler for ws::Message message
@@ -28,16 +71,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                 api::request::CMD_MOVE => {
                     let moving = api::request::Move::from_str(&text);
                     let response = api::response::Moving::new(vec![moving.from, moving.to]);
-                    ctx.text(&serde_json::to_string(&response).unwrap());
+                    self.broadcast(response);
                 }
                 api::request::CMD_ATTACK => {
                     let message = api::request::Attack::from_str(&text);
                     let message = api::response::Attacking::new(message.from, message.to);
-                    ctx.text(&serde_json::to_string(&message).unwrap());
+                    self.broadcast(message);
 
                     // After attack turn ends
-                    let message = api::common::Message::new(api::response::CMD_TURN);
-                    ctx.text(&serde_json::to_string(&message).unwrap());
+                    self.send_turn();
                 }
                 _ => {
                     debug!("Unknown command: {}", message.cmd);
@@ -47,6 +89,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
     }
 
     fn started(&mut self, ctx: &mut Self::Context) {
+        let mut clients_num = 0;
+        {
+            let mut clients = self.app_state.clients.lock().unwrap();
+            clients.push(ctx.address());
+            clients_num = clients.len();
+        }
+
+        self.self_addr = Some(ctx.address());
         debug!("Client connected");
 
         let mut game = Game::new(2, 2);
@@ -68,9 +118,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
             Err(error) => ctx.text(error),
         }
 
-        ctx.text(&serde_json::to_string(&game).unwrap());
-        let message = api::common::Message::new(api::response::CMD_TURN);
-        ctx.text(&serde_json::to_string(&message).unwrap())
+        if clients_num == 2 {
+            debug!("Two clients connected, sending game!");
+            self.broadcast(game);
+            let message = api::common::Message::new(api::response::CMD_TURN);
+            ctx.address().do_send(Msg(serde_json::to_string(&message).unwrap()));
+        } else if clients_num > 2 {
+            ctx.text("{\"cmd\": \"GFY! :D\"}");
+        }
     }
 
     fn finished(&mut self, _ctx: &mut Self::Context) {
