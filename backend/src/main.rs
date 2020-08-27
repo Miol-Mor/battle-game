@@ -29,8 +29,15 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
-async fn index(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    ws::start(websocket::Websocket {}, &req, stream)
+async fn index(req: HttpRequest, stream: web::Payload, data: web::Data<appstate::AppState>) -> Result<HttpResponse, Error> {
+    let res = ws::start(websocket::Websocket {
+        self_addr: None,
+        app_state: data.clone(),
+    }, &req, stream);
+
+    let cnt = data.clients.lock().unwrap();
+    debug!("Number of clients {}", cnt.len());
+    res
 }
 
 #[actix_rt::main]
