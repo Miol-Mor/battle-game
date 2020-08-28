@@ -51,9 +51,7 @@ async fn index(
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     pretty_env_logger::init();
-    let data = web::Data::new(appstate::AppState {
-        clients: Mutex::new(vec![]),
-    });
+    let data = web::Data::new(appstate::AppState::new());
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
