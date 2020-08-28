@@ -2,8 +2,8 @@ use actix::Addr;
 
 use std::sync::Mutex;
 
-use crate::websocket::Websocket;
 use crate::game;
+use crate::websocket::Websocket;
 
 #[derive(Debug)]
 pub struct AppState {

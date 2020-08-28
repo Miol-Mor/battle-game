@@ -75,12 +75,17 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                     debug!("{:?}", self.app_state.game.lock().unwrap());
                     let moving = api::request::Move::from_str(&text);
                     let mut game = self.app_state.game.lock().unwrap();
-                    game.set_unit(moving.from.y, moving.from.x, Unit {
-                        player: 0,
-                        hp: 0,
-                        attack: [1, 2],
-                        speed: 0
-                    }).unwrap();
+                    game.set_unit(
+                        moving.from.y,
+                        moving.from.x,
+                        Unit {
+                            player: 0,
+                            hp: 0,
+                            attack: [0, 0],
+                            speed: 0,
+                        },
+                    )
+                    .unwrap();
                     let response = api::response::Moving::new(vec![moving.from, moving.to]);
                     self.broadcast(&response);
                 }
