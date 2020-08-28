@@ -51,6 +51,7 @@ impl Actor for Websocket {
     type Context = ws::WebsocketContext<Self>;
 }
 
+// Message received by do_send() method
 impl Handler<Msg> for Websocket {
     type Result = ();
 
@@ -71,7 +72,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
 
             match message.cmd.as_str() {
                 api::request::CMD_MOVE => {
+                    debug!("{:?}", self.app_state.game.lock().unwrap());
                     let moving = api::request::Move::from_str(&text);
+                    let mut game = self.app_state.game.lock().unwrap();
+                    game.set_unit(moving.from.y, moving.from.x, Unit {
+                        player: 0,
+                        hp: 0,
+                        attack: [1, 2],
+                        speed: 0
+                    }).unwrap();
                     let response = api::response::Moving::new(vec![moving.from, moving.to]);
                     self.broadcast(&response);
                 }
