@@ -2,7 +2,7 @@ use super::hex_objects::content::Content;
 use super::unit::Unit;
 use serde::Serialize;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 pub struct Hex {
     pub x: u32,
     pub y: u32,

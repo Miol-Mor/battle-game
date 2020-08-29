@@ -4,7 +4,7 @@ use super::game_objects::unit::Unit;
 
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Game {
     cmd: String,
     row_n: u32,
