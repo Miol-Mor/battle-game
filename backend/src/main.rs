@@ -34,18 +34,14 @@ async fn index(
     stream: web::Payload,
     data: web::Data<appstate::AppState>,
 ) -> Result<HttpResponse, Error> {
-    let res = ws::start(
+    ws::start(
         websocket::Websocket {
             self_addr: None,
-            app_state: data.clone(),
+            app_state: data,
         },
         &req,
         stream,
-    );
-
-    let cnt = data.clients.lock().unwrap();
-    debug!("Number of clients {}", cnt.len());
-    res
+    )
 }
 
 #[actix_rt::main]

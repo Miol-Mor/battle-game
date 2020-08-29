@@ -38,11 +38,10 @@ impl Websocket {
         let clients = self.app_state.clients.lock().unwrap();
         debug!("Sending turn to other player");
         for c in &*clients {
-            if *c == *self.self_addr.as_ref().unwrap() {
-                continue;
+            if *c != *self.self_addr.as_ref().unwrap() {
+                c.do_send(Msg(serde_json::to_string(&message).unwrap()));
+                break;
             }
-            c.do_send(Msg(serde_json::to_string(&message).unwrap()));
-            break;
         }
     }
 }
@@ -91,7 +90,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
     }
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let mut clients_num = 0;
+        let clients_num;
         {
             let mut clients = self.app_state.clients.lock().unwrap();
             clients.push(ctx.address());
@@ -120,14 +119,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
             Err(error) => ctx.text(error),
         }
 
-        if clients_num == 2 {
-            debug!("Two clients connected, sending game!");
-            self.broadcast(game);
-            let message = api::common::Message::new(api::response::CMD_TURN);
-            ctx.address()
-                .do_send(Msg(serde_json::to_string(&message).unwrap()));
-        } else if clients_num > 2 {
-            ctx.text("{\"cmd\": \"GFY! :D\"}");
+        match clients_num {
+            2 => {
+                debug!("Two clients connected, sending game!");
+                self.broadcast(game);
+                self.send_turn();
+            }
+            n if n > 2 => {
+                ctx.text("{\"cmd\": \"GFY! :D\"}");
+            }
+            _ => {}
         }
     }
 
