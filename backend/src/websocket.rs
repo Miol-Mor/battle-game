@@ -24,7 +24,7 @@ pub struct Websocket {
 pub struct Msg(pub String);
 
 impl Websocket {
-    fn broadcast<T: Serialize>(&self, msg: T) {
+    fn broadcast<T: Serialize>(&self, msg: &T) {
         let clients = self.app_state.clients.lock().unwrap();
         let m = serde_json::to_string(&msg).unwrap();
         debug!("Sending {} to all clients", m);
@@ -70,14 +70,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
 
             match message.cmd.as_str() {
                 api::request::CMD_MOVE => {
+                    debug!("{:?}", self.app_state.game.lock().unwrap());
                     let moving = api::request::Move::from_str(&text);
                     let response = api::response::Moving::new(vec![moving.from, moving.to]);
-                    self.broadcast(response);
+                    self.broadcast(&response);
                 }
                 api::request::CMD_ATTACK => {
                     let message = api::request::Attack::from_str(&text);
                     let message = api::response::Attacking::new(message.from, message.to);
-                    self.broadcast(message);
+                    self.broadcast(&message);
 
                     // After attack turn ends
                     self.send_turn();
@@ -121,8 +122,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                     Ok(_) => {}
                     Err(error) => ctx.text(error),
                 }
-                self.broadcast(game);
+                self.broadcast(&game);
                 self.send_turn();
+                *self.app_state.game.lock().unwrap() = game;
             }
             n if n > 2 => {
                 ctx.text("{\"cmd\": \"GFY! :D\"}");
