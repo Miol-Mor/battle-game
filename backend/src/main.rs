@@ -1,17 +1,13 @@
 use crate::config::CONFIG;
 
-use actix::Addr;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 
-use game::Game;
-
-use std::sync::Mutex;
-
 mod api;
 mod appstate;
 mod auth;
+mod communicator;
 mod config;
 mod database;
 mod errors;
