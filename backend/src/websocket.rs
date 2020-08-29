@@ -38,11 +38,10 @@ impl Websocket {
         let clients = self.app_state.clients.lock().unwrap();
         debug!("Sending turn to other player");
         for c in &*clients {
-            if *c == *self.self_addr.as_ref().unwrap() {
-                continue;
+            if *c != *self.self_addr.as_ref().unwrap() {
+                c.do_send(Msg(serde_json::to_string(&message).unwrap()));
+                break;
             }
-            c.do_send(Msg(serde_json::to_string(&message).unwrap()));
-            break;
         }
     }
 }
@@ -105,7 +104,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
     }
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let mut clients_num = 0;
+        let clients_num;
         {
             let mut clients = self.app_state.clients.lock().unwrap();
             clients.push(ctx.address());
@@ -115,36 +114,36 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
         self.self_addr = Some(ctx.address());
         debug!("Client connected");
 
-        if clients_num == 2 {
-            // create new game
-            let mut game = Game::new(2, 2);
-            let unit = Unit {
-                player: 1,
-                hp: 1,
-                attack: [1, 2],
-                speed: 1,
-            };
-            let wall = Wall {};
-
-            match game.set_unit(0, 0, unit) {
-                Ok(_) => {}
-                Err(error) => ctx.text(error),
-            }
-
-            match game.set_content(1, 1, Content::Wall(wall)) {
-                Ok(_) => {}
-                Err(error) => ctx.text(error),
-            }
-
-            if clients_num == 2 {
+        match clients_num {
+            2 => {
                 debug!("Two clients connected, sending game!");
+                // create new game
+                let mut game = Game::new(2, 2);
+                let unit = Unit {
+                    player: 1,
+                    hp: 1,
+                    attack: [1, 2],
+                    speed: 1,
+                };
+                let wall = Wall {};
+
+                match game.set_unit(0, 0, unit) {
+                    Ok(_) => {}
+                    Err(error) => ctx.text(error),
+                }
+
+                match game.set_content(1, 1, Content::Wall(wall)) {
+                    Ok(_) => {}
+                    Err(error) => ctx.text(error),
+                }
                 self.broadcast(&game);
-                let message = api::common::Message::new(api::response::CMD_TURN);
-                ctx.address().do_send(Msg(serde_json::to_string(&message).unwrap()));
+                self.send_turn();
                 *self.app_state.game.lock().unwrap() = game;
-            } else if clients_num > 2 {
+            }
+            n if n > 2 => {
                 ctx.text("{\"cmd\": \"GFY! :D\"}");
             }
+            _ => {}
         }
     }
 
