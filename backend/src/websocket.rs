@@ -9,6 +9,7 @@ use super::game_objects::hex_objects::content::Content;
 use super::game_objects::hex_objects::wall::Wall;
 use super::game_objects::unit::Unit;
 use crate::appstate::AppState;
+use crate::communicator::Msg;
 
 use super::api;
 
@@ -17,33 +18,6 @@ use super::api;
 pub struct Websocket {
     pub self_addr: Option<Addr<Websocket>>,
     pub app_state: web::Data<AppState>,
-}
-
-#[derive(Message, Debug)]
-#[rtype(result = "()")]
-pub struct Msg(pub String);
-
-impl Websocket {
-    fn broadcast<T: Serialize>(&self, msg: &T) {
-        let clients = self.app_state.clients.lock().unwrap();
-        let m = serde_json::to_string(&msg).unwrap();
-        debug!("Sending {} to all clients", m);
-        for c in &*clients {
-            c.do_send(Msg(m.clone()));
-        }
-    }
-
-    fn send_turn(&self) {
-        let message = api::common::Message::new(api::response::CMD_TURN);
-        let clients = self.app_state.clients.lock().unwrap();
-        debug!("Sending turn to other player");
-        for c in &*clients {
-            if *c != *self.self_addr.as_ref().unwrap() {
-                c.do_send(Msg(serde_json::to_string(&message).unwrap()));
-                break;
-            }
-        }
-    }
 }
 
 impl Actor for Websocket {
@@ -69,6 +43,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
             let message = api::common::Message::from_str(&text);
             debug!("Client message: {:?}", message);
 
+            debug!(
+                "Current player: {:}",
+                self.app_state.current_player.lock().unwrap()
+            );
+
             match message.cmd.as_str() {
                 api::request::CMD_MOVE => {
                     let moving = api::request::Move::from_str(&text);
@@ -87,15 +66,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                     )
                     .unwrap();
                     let response = api::response::Moving::new(vec![moving.from, moving.to]);
-                    self.broadcast(&response);
+                    self.app_state.broadcast(&response);
                 }
                 api::request::CMD_ATTACK => {
                     let message = api::request::Attack::from_str(&text);
                     let message = api::response::Attacking::new(message.from, message.to);
-                    self.broadcast(&message);
+                    self.app_state.broadcast(&message);
 
                     // After attack turn ends
-                    self.send_turn();
+                    self.app_state.next_turn();
                 }
                 _ => {
                     debug!("Unknown command: {}", message.cmd);
@@ -136,8 +115,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                     Ok(_) => {}
                     Err(error) => ctx.text(error),
                 }
-                self.broadcast(&game);
-                self.send_turn();
+                self.app_state.broadcast(&game);
+                self.app_state.next_turn();
                 *self.app_state.game.lock().unwrap() = game;
             }
             n if n > 2 => {
