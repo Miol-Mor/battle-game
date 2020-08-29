@@ -71,14 +71,14 @@ mod test {
         // unit
         let player = 1;
         let hp = 1;
-        let attack = [1, 2];
+        let damage = [1, 2];
         let speed = 1;
 
         let mut game = Game::new(5, 5);
         let unit = Unit {
             player,
             hp,
-            attack,
+            damage,
             speed,
         };
 
@@ -90,7 +90,7 @@ mod test {
         let field_unit = game.field.get_hex(y1, x1).unwrap().unit.as_ref().unwrap();
         assert_eq!(field_unit.player, player);
         assert_eq!(field_unit.hp, hp);
-        assert_eq!(field_unit.attack, attack);
+        assert_eq!(field_unit.damage, damage);
         assert_eq!(field_unit.speed, speed);
 
         let res = game.set_unit(y2, x2, unit);
