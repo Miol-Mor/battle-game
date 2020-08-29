@@ -100,28 +100,27 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
         self.self_addr = Some(ctx.address());
         debug!("Client connected");
 
-        let mut game = Game::new(2, 2);
-        let unit = Unit {
-            player: 1,
-            hp: 1,
-            attack: [1, 2],
-            speed: 1,
-        };
-        let wall = Wall {};
-
-        match game.set_unit(0, 0, unit) {
-            Ok(_) => {}
-            Err(error) => ctx.text(error),
-        }
-
-        match game.set_content(1, 1, Content::Wall(wall)) {
-            Ok(_) => {}
-            Err(error) => ctx.text(error),
-        }
-
         match clients_num {
             2 => {
                 debug!("Two clients connected, sending game!");
+                let mut game = Game::new(2, 2);
+                let unit = Unit {
+                    player: 1,
+                    hp: 1,
+                    attack: [1, 2],
+                    speed: 1,
+                };
+                let wall = Wall {};
+
+                match game.set_unit(0, 0, unit) {
+                    Ok(_) => {}
+                    Err(error) => ctx.text(error),
+                }
+
+                match game.set_content(1, 1, Content::Wall(wall)) {
+                    Ok(_) => {}
+                    Err(error) => ctx.text(error),
+                }
                 self.broadcast(game);
                 self.send_turn();
             }
