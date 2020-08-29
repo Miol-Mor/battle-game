@@ -37,7 +37,7 @@ mod test {
         let unit = Unit {
             player: 1,
             hp: 10,
-            attack: [2, 4],
+            damage: [2, 4],
             speed: 4,
         };
         let content = Content::Wall(Wall {});

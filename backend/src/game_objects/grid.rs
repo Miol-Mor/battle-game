@@ -78,7 +78,7 @@ mod test {
         let unit = Unit {
             player: 1,
             hp: 1,
-            attack: [120, 130],
+            damage: [120, 130],
             speed: 1,
         };
         let hex_one = Hex {

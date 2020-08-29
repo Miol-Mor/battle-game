@@ -81,7 +81,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                         Unit {
                             player: 0,
                             hp: 0,
-                            attack: [0, 0],
+                            damage: [0, 0],
                             speed: 0,
                         },
                     )
@@ -122,7 +122,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                 let unit = Unit {
                     player: 1,
                     hp: 1,
-                    attack: [1, 2],
+                    damage: [1, 2],
                     speed: 1,
                 };
                 let wall = Wall {};
