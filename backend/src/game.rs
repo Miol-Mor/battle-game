@@ -7,38 +7,38 @@ use serde::Serialize;
 #[derive(Serialize, Debug)]
 pub struct Game {
     cmd: String,
-    row_n: u32,
-    col_n: u32,
+    num_x: u32,
+    num_y: u32,
     field: Grid,
 }
 
 impl Game {
-    pub fn new(row_n: u32, col_n: u32) -> Game {
+    pub fn new(num_x: u32, num_y: u32) -> Game {
         Game {
             cmd: String::from("field"),
-            row_n,
-            col_n,
-            field: Grid::new(row_n, col_n),
+            num_x,
+            num_y,
+            field: Grid::new(num_x, num_y),
         }
     }
 
-    pub fn set_unit(&mut self, y: u32, x: u32, unit: Unit) -> Result<(), &str> {
-        match self.field.get_hex(y, x) {
+    pub fn set_unit(&mut self, x: u32, y: u32, unit: Unit) -> Result<(), &str> {
+        match self.field.get_hex(x, y) {
             Some(hex) => {
                 hex.unit = Some(unit);
                 Ok(())
             }
-            None => Err("no hex"),
+            None => Err("Error while setting unit: no hex"),
         }
     }
 
-    pub fn set_content(&mut self, y: u32, x: u32, content: Content) -> Result<(), &str> {
-        match self.field.get_hex(y, x) {
+    pub fn set_content(&mut self, x: u32, y: u32, content: Content) -> Result<(), &str> {
+        match self.field.get_hex(x, y) {
             Some(hex) => {
                 hex.content = Some(content);
                 Ok(())
             }
-            None => Err("no hex"),
+            None => Err("Error while setting content: no hex"),
         }
     }
 }
@@ -52,12 +52,12 @@ mod test {
 
     #[test]
     fn new() {
-        let row_n = 3;
-        let col_n = 8;
-        let game = Game::new(row_n, col_n);
+        let num_x = 8;
+        let num_y = 3;
+        let game = Game::new(num_x, num_y);
 
-        assert_eq!(game.row_n, row_n);
-        assert_eq!(game.col_n, col_n);
+        assert_eq!(game.num_x, num_x);
+        assert_eq!(game.num_y, num_y);
     }
 
     #[test]
@@ -82,20 +82,20 @@ mod test {
             speed,
         };
 
-        let res = game.set_unit(y1, x1, unit.clone());
+        let res = game.set_unit(x1, y1, unit.clone());
         assert!(res.is_ok());
-        assert!(game.field.get_hex(y1, x1).unwrap().unit.is_some());
-        assert!(game.field.get_hex(y1, x1).unwrap().content.is_none());
+        assert!(game.field.get_hex(x1, y1).unwrap().unit.is_some());
+        assert!(game.field.get_hex(x1, y1).unwrap().content.is_none());
 
-        let field_unit = game.field.get_hex(y1, x1).unwrap().unit.as_ref().unwrap();
+        let field_unit = game.field.get_hex(x1, y1).unwrap().unit.as_ref().unwrap();
         assert_eq!(field_unit.player, player);
         assert_eq!(field_unit.hp, hp);
         assert_eq!(field_unit.damage, damage);
         assert_eq!(field_unit.speed, speed);
 
-        let res = game.set_unit(y2, x2, unit);
+        let res = game.set_unit(x2, y2, unit);
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), "no hex");
+        assert_eq!(res.unwrap_err(), "Error while setting unit: no hex");
     }
 
     #[test]
@@ -115,22 +115,22 @@ mod test {
         assert!(game.field.get_hex(y1, x1).unwrap().unit.is_none());
         assert!(game.field.get_hex(y1, x1).unwrap().content.is_some());
 
-        let res = game.set_content(y2, x2, Content::Wall(wall));
+        let res = game.set_content(x2, y2, Content::Wall(wall));
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err(), "no hex");
+        assert_eq!(res.unwrap_err(), "Error while setting content: no hex");
     }
 
     #[test]
     fn serialize() {
-        let row_n = 1;
-        let col_n = 1;
-        let game = Game::new(row_n, col_n);
+        let num_x = 1;
+        let num_y = 1;
+        let game = Game::new(num_x, num_y);
 
         let game_string = serde_json::to_string(&game).unwrap();
         assert_eq!(
             game_string,
             format!(
-                "{{\"cmd\":\"field\",\"row_n\":1,\"col_n\":1,\"field\":{}}}",
+                "{{\"cmd\":\"field\",\"num_x\":1,\"num_y\":1,\"field\":{}}}",
                 serde_json::to_string(&game.field).unwrap()
             ),
         );
