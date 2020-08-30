@@ -1,9 +1,9 @@
 import * as PIXI from 'pixi.js';
 
 class Hex extends PIXI.Graphics {
-    constructor(y, x, side, BORDER_WIDTH, BORDER_COLOR, FILL_COLOR) {
+    constructor(x, y, side, BORDER_WIDTH, BORDER_COLOR, FILL_COLOR) {
         super();
-        this.coords = {y: y, x: x};
+        this.coords = {x: x, y: y};
         this.BORDER_WIDTH = BORDER_WIDTH;
         this.BORDER_COLOR = BORDER_COLOR;
         this.FILL_COLOR = FILL_COLOR;
@@ -71,10 +71,10 @@ export class Hex_grid {
     // row_n, col_n - number of rows and columns in grid
     // cellsize - side of a hexcell (length of its edge)
     // x_offset, y_offset - left and top offsets inside stage
-    constructor(stage, row_n = 6, col_n = 8, hex_size = 50, x_offset = 50, y_offset = 50) {
+    constructor(stage, num_x = 8, num_y = 6, hex_size = 50, x_offset = 50, y_offset = 50) {
         this.stage = stage;
-        this.row_n = row_n;
-        this.col_n = col_n;
+        this.num_x = num_x;
+        this.num_y = num_y;
         this.hex_size = hex_size;
         this.x_offset = x_offset;
         this.y_offset = y_offset;
@@ -93,10 +93,10 @@ export class Hex_grid {
         grid_container.position.set(this.x_offset, this.y_offset);
 
         let side = this.hex_size;
-        for (let y = 0; y < this.row_n; y++) {
-            this.hexes[y] = [];
-            for (let x = 0; x < this.col_n; x++) {
-                let cur_hex = new Hex(y, x, this.hex_size, this.BORDER_WIDTH, this.BORDER_COLOR, this.FILL_COLOR);
+        for (let x = 0; x < this.num_x; x++) {
+            this.hexes[x] = [];
+            for (let y = 0; y < this.num_y; y++) {
+                let cur_hex = new Hex(x, y, this.hex_size, this.BORDER_WIDTH, this.BORDER_COLOR, this.FILL_COLOR);
 
                 let y_offset = side;
                 let x_offset = side * Math.sqrt(3) / 2;
@@ -108,15 +108,15 @@ export class Hex_grid {
 
                 cur_hex.position.set(x_coord, y_coord);
                 grid_container.addChild(cur_hex);
-                this.hexes[y].push(cur_hex);
+                this.hexes[x].push(cur_hex);
             }
         }
     }
 
     // dev
     // private
-    draw_hex(y, x) {
-        let cur_hex = this.hexes[y][x];
+    draw_hex(x, y) {
+        let cur_hex = this.hexes[x][y];
 
         cur_hex.clear();
         cur_hex.lineStyle(this.BORDER_WIDTH, this.BORDER_COLOR, 1);

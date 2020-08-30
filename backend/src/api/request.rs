@@ -19,12 +19,12 @@ impl Move {
 
 #[derive(Deserialize, Debug)]
 pub struct Attack {
-    from: Point,
-    to: Point,
+    pub from: Point,
+    pub to: Point,
 }
 
 impl Attack {
-    pub fn from_str(s: &str) -> Move {
+    pub fn from_str(s: &str) -> Attack {
         serde_json::from_str(s).unwrap()
     }
 }

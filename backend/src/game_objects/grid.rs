@@ -7,10 +7,10 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn new(row_n: u32, col_n: u32) -> Grid {
-        let hexes: Vec<Hex> = (0..row_n)
+    pub fn new(num_x: u32, num_y: u32) -> Grid {
+        let hexes: Vec<Hex> = (0..num_x)
             .flat_map(|x| {
-                (0..col_n).map(move |y| Hex {
+                (0..num_y).map(move |y| Hex {
                     x,
                     y,
                     unit: None,
@@ -22,7 +22,7 @@ impl Grid {
         Grid { hexes }
     }
 
-    pub fn get_hex(&mut self, y: u32, x: u32) -> Option<&mut Hex> {
+    pub fn get_hex(&mut self, x: u32, y: u32) -> Option<&mut Hex> {
         self.hexes.iter_mut().find(|hex| hex.x == x && hex.y == y)
     }
 }
@@ -37,15 +37,15 @@ mod test {
 
     #[test]
     fn new() {
-        let row_n = 10;
-        let col_n = 13;
-        let grid = Grid::new(row_n, col_n);
+        let num_x = 13;
+        let num_y = 10;
+        let grid = Grid::new(num_x, num_y);
 
-        assert_eq!(grid.hexes.len(), (row_n * col_n) as usize);
+        assert_eq!(grid.hexes.len(), (num_x * num_y) as usize);
 
         let mut hexes = grid.hexes.into_iter();
-        for x in 0..row_n {
-            for y in 0..col_n {
+        for x in 0..num_x {
+            for y in 0..num_y {
                 let hex = hexes.next().unwrap();
 
                 assert_eq!(hex.x, x);
@@ -65,8 +65,8 @@ mod test {
 
         assert!(hex.is_some());
         let hex = hex.unwrap();
-        assert_eq!(hex.y, 1);
-        assert_eq!(hex.x, 2);
+        assert_eq!(hex.x, 1);
+        assert_eq!(hex.y, 2);
 
         // hex that does not exists
         let hex = grid.get_hex(3, 8);

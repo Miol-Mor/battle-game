@@ -200,13 +200,13 @@ export class Game {
 
     // private
     create_grid(field_data) {
-        let grid = new Hex_grid(this.app.stage, field_data.row_n, field_data.col_n, 50, 100, 100);
+        let grid = new Hex_grid(this.app.stage, field_data.num_x, field_data.num_y, 50, 100, 100);
         grid.draw();
 
         let hexes = field_data.field.hexes;
-        for (let i = 0; i < field_data.row_n * field_data.col_n; i++) {
+        for (let i = 0; i < field_data.num_x * field_data.num_y; i++) {
             if (hexes[i].content && hexes[i].content.type === 'wall') {
-                grid.hexes[hexes[i].y][hexes[i].x].set_content('wall');
+                grid.hexes[hexes[i].x][hexes[i].y].set_content('wall');
             }
         }
 
@@ -216,7 +216,7 @@ export class Game {
     // private
     set_units_start_pos(field_data) {
         let hexes = field_data.field.hexes;
-        for (let i = 0; i < field_data.row_n * field_data.col_n; i++) {
+        for (let i = 0; i < field_data.num_x * field_data.num_y; i++) {
             if (hexes[i].unit !== undefined) {
                 let texture;
                 if (hexes[i].unit.player === 1) {
@@ -224,7 +224,7 @@ export class Game {
                 } else {
                     texture = this.app.loader.resources["red unit"].texture;
                 }
-                this.create_unit(texture, this.grid.hex_size, hexes[i].unit, hexes[i].y, hexes[i].x);
+                this.create_unit(texture, this.grid.hex_size, hexes[i].unit, hexes[i].x, hexes[i].y);
             }
         }
     }
@@ -250,9 +250,9 @@ export class Game {
 
     // private
     set_hex_click_handlers() {
-        for (let y = 0; y < this.grid.row_n; y++) {
-            for (let x = 0; x < this.grid.col_n; x++) {
-                let hex = this.grid.hexes[y][x];
+        for (let x = 0; x < this.grid.num_x; x++) {
+            for (let y = 0; y < this.grid.num_y; y++) {
+                let hex = this.grid.hexes[x][y];
                 hex.interactive = true;
                 hex.hitArea = hex.polygon;
                 hex.on('click', this.process_click.bind(this));
@@ -321,7 +321,7 @@ export class Game {
         console.log('redraw field');
         switch(data.type) {
             case 'move':
-                this.move_unit(data.coords[0].y, data.coords[0].x, data.coords[1].y, data.coords[1].x);
+                this.move_unit(data.coords[0].x, data.coords[0].y, data.coords[1].x, data.coords[1].y);
             break;
 
             case 'attack':
@@ -339,7 +339,7 @@ export class Game {
     // private
     change_hex(data) {
         console.log(data);
-        let hex = this.grid.hexes[data.y][data.x];
+        let hex = this.grid.hexes[data.x][data.y];
         if (data.content) {
             hex.set_content(data.content);
         }
@@ -351,9 +351,9 @@ export class Game {
 
     // Actions with units
     // private
-    create_unit(texture, img_size, params, y, x) {
+    create_unit(texture, img_size, params, x, y) {
         let unit = new Unit(texture, img_size, params);
-        this.grid.hexes[y][x].set_unit(unit);
+        this.grid.hexes[x][y].set_unit(unit);
         return unit;
     }
 
@@ -376,11 +376,11 @@ export class Game {
     // dev
     // private
     find_unit(player) {
-        for (let y = 0; y < this.grid.row_n; y++) {
-            for (let x = 0; x < this.grid.col_n; x++) {
-                let unit = this.grid.hexes[y][x].unit;
+        for (let x = 0; x < this.grid.num_x; x++) {
+            for (let y = 0; y < this.grid.num_y; y++) {
+                let unit = this.grid.hexes[x][y].unit;
                 if (unit && unit.params.player === player) {
-                    return this.grid.hexes[y][x].coords;
+                    return this.grid.hexes[x][y].coords;
                 }
             }
         }
@@ -390,9 +390,9 @@ export class Game {
     // dev
     // private
     find_empty_hex() {
-        for (let y = 0; y < this.grid.row_n; y++) {
-            for (let x = 0; x < this.grid.col_n; x++) {
-                let hex = this.grid.hexes[y][x];
+        for (let x = 0; x < this.grid.num_x; x++) {
+            for (let y = 0; y < this.grid.num_y; y++) {
+                let hex = this.grid.hexes[x][y];
                 if (! hex.content && ! hex.unit) {
                     return hex.coords;
                 }
