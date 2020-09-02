@@ -2,6 +2,8 @@ use super::game_objects::grid::Grid;
 use super::game_objects::hex_objects::content::Content;
 use super::game_objects::unit::Unit;
 
+use crate::api::common::Point;
+
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
@@ -40,6 +42,11 @@ impl Game {
             }
             None => Err("Error while setting content: no hex"),
         }
+    }
+
+    pub fn move_unit(&mut self, from: Point, to: Point) -> Result<Vec<Point>, &str> {
+        // something like check
+        Ok(vec![from, to])
     }
 }
 

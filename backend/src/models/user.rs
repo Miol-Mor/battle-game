@@ -1,6 +1,5 @@
 use crate::auth::hash;
 use crate::database::UserStorage;
-use crate::errors::ApiError;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

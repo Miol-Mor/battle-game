@@ -1,8 +1,8 @@
 use crate::database::UserStorage;
 use crate::errors::ApiError;
-use crate::helpers::{respond_json, respond_ok};
+use crate::helpers::respond_json;
 use crate::models::user::{find, get_all, User};
-use actix_web::web::{block, Data, HttpResponse, Json, Path};
+use actix_web::web::{block, Data, Json, Path};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

@@ -1,13 +1,7 @@
-use actix::{Actor, Addr, AsyncContext, Handler, Message, StreamHandler};
+use actix::{Actor, Addr, AsyncContext, Handler, StreamHandler};
 use actix_web::web;
 use actix_web_actors::ws;
 
-use serde::Serialize;
-
-use super::game::Game;
-use super::game_objects::hex_objects::content::Content;
-use super::game_objects::hex_objects::wall::Wall;
-use super::game_objects::unit::Unit;
 use crate::appstate::AppState;
 use crate::communicator::Msg;
 
@@ -16,8 +10,7 @@ use super::api;
 /// Define http actor
 #[derive(Debug)]
 pub struct Websocket {
-    pub self_addr: Option<Addr<Websocket>>,
-    pub app_state: web::Data<AppState>,
+    pub app_state_addr: web::Data<Addr<AppState>>,
 }
 
 impl Actor for Websocket {
@@ -40,32 +33,31 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
         if let Ok(ws::Message::Text(text)) = msg {
             debug!("Client text: {}", text);
 
-            self.app_state.process_message(text);
+            let message = api::common::Message::from_str(&text);
+            match message.cmd.as_str() {
+                api::request::CMD_MOVE => {
+                    let message = api::request::Move::from_str(&text);
+                    let inner_message = api::inner::Request::new(ctx.address(), message);
+
+                    self.app_state_addr.do_send(inner_message);
+                }
+                api::request::CMD_ATTACK => {
+                    let message = api::request::Attack::from_str(&text);
+                    let inner_message = api::inner::Request::new(ctx.address(), message);
+
+                    self.app_state_addr.do_send(inner_message);
+                }
+                _ => {
+                    debug!("Unknown command: {}", message.cmd);
+                }
+            }
         }
     }
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        let clients_num;
-        {
-            let mut clients = self.app_state.clients.lock().unwrap();
-            clients.push(ctx.address());
-            clients_num = clients.len();
-        }
-
-        self.self_addr = Some(ctx.address());
         debug!("Client connected");
-
-        match clients_num {
-            2 => {
-                debug!("Two clients connected, sending game!");
-
-                self.app_state.new_game();
-            }
-            n if n > 2 => {
-                ctx.text("{\"cmd\": \"GFY! :D\"}");
-            }
-            _ => {}
-        }
+        self.app_state_addr
+            .do_send(api::request::NewClient::new(ctx.address()));
     }
 
     fn finished(&mut self, _ctx: &mut Self::Context) {
