@@ -5,6 +5,7 @@ use super::common::Point;
 const CMD_MOVE: &str = "moving";
 const CMD_ATTACK: &str = "attacking";
 pub const CMD_TURN: &str = "turn";
+const CMD_ERROR: &str = "error";
 
 #[derive(Serialize)]
 pub struct Moving {
@@ -36,6 +37,21 @@ impl Attacking {
             from,
             to,
             changes: None,
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct ResponseError {
+    cmd: String,
+    message: String,
+}
+
+impl ResponseError {
+    pub fn new(message: String) -> ResponseError {
+        ResponseError {
+            cmd: CMD_ERROR.to_string(),
+            message,
         }
     }
 }

@@ -3,6 +3,7 @@ use crate::config::CONFIG;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
+use actix::{Addr, Actor};
 
 mod api;
 mod appstate;
@@ -28,12 +29,11 @@ extern crate log;
 async fn index(
     req: HttpRequest,
     stream: web::Payload,
-    data: web::Data<appstate::AppState>,
+    data: web::Data<Addr<appstate::AppState>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
         websocket::Websocket {
-            self_addr: None,
-            app_state: data,
+            app_state_addr: data,
         },
         &req,
         stream,
@@ -43,7 +43,7 @@ async fn index(
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     pretty_env_logger::init();
-    let data = web::Data::new(appstate::AppState::new());
+    let data = web::Data::new(appstate::AppState::new().start());
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())

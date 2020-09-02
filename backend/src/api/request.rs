@@ -1,11 +1,15 @@
-use serde::Deserialize;
+use actix::{Addr, Message};
+use serde::{Deserialize, Serialize};
 
 use super::common::Point;
+use crate::api::response::ResponseError;
+use crate::websocket::Websocket;
 
 pub const CMD_MOVE: &str = "move";
 pub const CMD_ATTACK: &str = "attack";
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Message)]
+#[rtype(result = "Option<ResponseError>")]
 pub struct Move {
     pub from: Point,
     pub to: Point,
@@ -26,5 +30,17 @@ pub struct Attack {
 impl Attack {
     pub fn from_str(s: &str) -> Attack {
         serde_json::from_str(s).unwrap()
+    }
+}
+
+#[derive(Debug, Message)]
+#[rtype(result = "()")]
+pub struct NewClient {
+    pub address: Addr<Websocket>,
+}
+
+impl NewClient {
+    pub fn new(address: Addr<Websocket>) -> NewClient {
+        NewClient { address }
     }
 }

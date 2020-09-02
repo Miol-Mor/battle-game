@@ -1,12 +1,13 @@
-use actix::Addr;
+use actix::{Actor, Addr, Context, Handler};
 
 use serde::Serialize;
-use std::sync::Mutex;
 
 use crate::api;
 use crate::communicator;
 use crate::websocket::Websocket;
 
+use crate::api::request::{Attack, Move};
+use crate::api::response::{Attacking, Moving};
 use crate::game::Game;
 use crate::game_objects::hex_objects::content::Content;
 use crate::game_objects::hex_objects::wall::Wall;
@@ -14,76 +15,97 @@ use crate::game_objects::unit::Unit;
 
 #[derive(Debug)]
 pub struct AppState {
-    pub clients: Mutex<Vec<Addr<Websocket>>>,
-    pub game: Mutex<Game>,
-    pub current_player: Mutex<u32>,
+    pub clients: Vec<Addr<Websocket>>,
+    pub game: Game,
+    pub current_player: u8,
+}
+
+impl Actor for AppState {
+    type Context = Context<Self>;
+}
+
+impl Handler<api::inner::Request<Move>> for AppState {
+    type Result = ();
+
+    fn handle(
+        &mut self,
+        message: api::inner::Request<Move>,
+        _: &mut Self::Context,
+    ) -> Self::Result {
+        debug!("Appstate process move");
+        let message = message.payload;
+        match self.game.move_unit(message.from, message.to) {
+            Ok(path) => {
+                let message = Moving::new(path);
+                self.broadcast(&message);
+            }
+            Err(_) => unimplemented!(),
+        }
+    }
+}
+
+impl Handler<api::inner::Request<Attack>> for AppState {
+    type Result = ();
+
+    fn handle(
+        &mut self,
+        message: api::inner::Request<Attack>,
+        _: &mut Self::Context,
+    ) -> Self::Result {
+        debug!("Handle attack");
+        let message = Attacking::new(message.payload.from, message.payload.to);
+
+        self.broadcast(&message);
+        self.next_turn();
+    }
+}
+
+impl Handler<api::request::NewClient> for AppState {
+    type Result = ();
+
+    fn handle(&mut self, client: api::request::NewClient, _: &mut Self::Context) -> Self::Result {
+        self.clients.push(client.address);
+
+        if self.clients.len() == 2 {
+            self.new_game();
+        }
+    }
 }
 
 impl AppState {
     pub fn new() -> AppState {
         AppState {
-            clients: Mutex::new(vec![]),
-            game: Mutex::new(Game::new(0, 0)),
-            current_player: Mutex::new(0),
+            clients: vec![],
+            game: Game::new(0, 0),
+            current_player: 0,
         }
     }
 
-    pub fn next_turn(&self) {
+    pub fn next_turn(&mut self) {
         self.change_player();
         self.send_turn();
     }
 
     pub fn broadcast<T: Serialize>(&self, msg: &T) {
-        let communicator = communicator::Communicator::new(self.clients.lock().unwrap().clone());
+        let communicator = communicator::Communicator::new(self.clients.clone());
 
         communicator.broadcast(msg)
     }
 
-    fn change_player(&self) {
-        *self.current_player.lock().unwrap() += 1;
-        *self.current_player.lock().unwrap() %= 2;
+    fn change_player(&mut self) {
+        self.current_player += 1;
+        self.current_player %= 2;
     }
 
     fn send_turn(&self) {
         let msg = api::common::Message::new(api::response::CMD_TURN);
-        let communicator = communicator::Communicator::new(self.clients.lock().unwrap().clone());
+        let communicator = communicator::Communicator::new(self.clients.clone());
 
-        communicator.broadcast_everyone_but(
-            &msg,
-            self.clients.lock().unwrap()[*self.current_player.lock().unwrap() as usize].clone(),
-        );
+        communicator
+            .broadcast_everyone_but(&msg, self.clients[self.current_player as usize].clone());
     }
 
-    pub fn process_message(&self, text: String) {
-        let message = api::common::Message::from_str(&text);
-        match message.cmd.as_str() {
-            api::request::CMD_MOVE => {
-                self.process_move(api::request::Move::from_str(&text));
-            }
-            api::request::CMD_ATTACK => {
-                self.process_attack(api::request::Attack::from_str(&text));
-            }
-            _ => {
-                debug!("Unknown command: {}", message.cmd);
-            }
-        }
-    }
-
-    fn process_move(&self, data: api::request::Move) {
-        // let mut game = self.game.lock().unwrap();
-        let response = api::response::Moving::new(vec![data.from, data.to]);
-        self.broadcast(&response);
-    }
-
-    fn process_attack(&self, data: api::request::Attack) {
-        let response = api::response::Attacking::new(data.from, data.to);
-        self.broadcast(&response);
-
-        // After attack turn ends
-        self.next_turn();
-    }
-
-    pub fn new_game(&self) {
+    pub fn new_game(&mut self) {
         let mut game = Game::new(4, 3);
         let unit0 = Unit {
             player: 0,
@@ -119,6 +141,6 @@ impl AppState {
 
         self.broadcast(&game);
         self.next_turn();
-        *self.game.lock().unwrap() = game;
+        self.game = game;
     }
 }
