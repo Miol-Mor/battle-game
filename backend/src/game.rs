@@ -1,10 +1,13 @@
 use super::game_objects::grid::Grid;
 use super::game_objects::hex_objects::content::Content;
+use super::game_objects::hex::Hex;
 use super::game_objects::unit::Unit;
 
 use crate::api::common::Point;
 
 use serde::Serialize;
+
+use rand::Rng;
 
 #[derive(Serialize, Debug)]
 pub struct Game {
@@ -21,6 +24,15 @@ impl Game {
             num_x,
             num_y,
             field: Grid::new(num_x, num_y),
+        }
+    }
+
+    pub fn get_hex(&mut self, x: u32, y: u32) -> Result<&mut Hex, &str> {
+        match self.field.get_hex(x, y) {
+            Some(hex) => {
+                Ok(hex)
+            }
+            None => Err("Error while getting hex: no such hex"),
         }
     }
 
@@ -57,6 +69,33 @@ impl Game {
             }
             None => Err("No unit found"),
         }
+    }
+
+    pub fn attack(&mut self, from: Point, to: Point) -> Result<(Vec<Hex>, Vec<Hex>), &str> {
+        let mut from = self.get_hex(from.x, from.y).unwrap();
+        let from_unit = match from.unit {
+            None => return Err("No unit found in 'from' hex"),
+            Some(unit) => unit,
+        };
+
+        let mut to = self.get_hex(to.x, to.y).unwrap();
+        let mut to_unit = match to.unit {
+            None => return Err("No unit found in 'to' hex"),
+            Some(unit) => unit,
+        };
+
+        let mut hurt: Vec<Hex> = vec![];
+        let mut die: Vec<Hex> = vec![];
+
+        let mut rng = rand::thread_rng();
+        let dmg = rng.gen_range(from_unit.damage[0], from_unit.damage[1]);
+        to_unit.hp -= dmg;
+        if to_unit.hp <= 0 {
+            die.push(*to);
+        } else {
+            hurt.push(*to);
+        }
+        Ok((hurt, die))
     }
 }
 

@@ -8,7 +8,7 @@ use crate::websocket::Websocket;
 use crate::api;
 use crate::api::inner;
 use crate::api::request::{Attack, Move};
-use crate::api::response::{Attacking, Moving};
+use crate::api::response::{Attacking, Moving, Changes};
 use crate::game::Game;
 use crate::game_objects::hex_objects::content::Content;
 use crate::game_objects::hex_objects::wall::Wall;
@@ -46,9 +46,17 @@ impl Handler<inner::Request<Attack>> for GameServer {
 
     fn handle(&mut self, message: inner::Request<Attack>, _: &mut Self::Context) -> Self::Result {
         debug!("Handle attack");
-        let message = Attacking::new(message.payload.from, message.payload.to);
-
-        self.broadcast(&message);
+        match self.game.attack(message.payload.from, message.payload.to) {
+            Ok((hurt, die)) => {
+                let message = Attacking::new(
+                    message.payload.from,
+                    message.payload.to,
+                    Changes { hurt, die },
+                );
+                self.broadcast(&message);
+            }
+            Err(_) => unimplemented!(),
+        }
         self.next_turn();
     }
 }
