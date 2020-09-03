@@ -77,6 +77,7 @@ impl GameServer {
     pub fn next_turn(&mut self) {
         self.change_player();
         self.send_turn();
+        debug!("Game state: {:?}", self.game);
     }
 
     pub fn broadcast<T: Serialize>(&self, msg: &T) {
