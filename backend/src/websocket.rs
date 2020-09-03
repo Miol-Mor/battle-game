@@ -57,7 +57,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
     fn started(&mut self, ctx: &mut Self::Context) {
         debug!("Client connected");
         self.server_addr
-            .do_send(api::request::NewClient::new(ctx.address()));
+            .do_send(api::inner::NewClient::new(ctx.address()));
     }
 
     fn finished(&mut self, _ctx: &mut Self::Context) {

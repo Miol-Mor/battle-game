@@ -2,10 +2,11 @@ use actix::{Actor, Addr, Context, Handler};
 
 use serde::Serialize;
 
-use crate::api;
 use crate::communicator;
 use crate::websocket::Websocket;
 
+use crate::api;
+use crate::api::inner;
 use crate::api::request::{Attack, Move};
 use crate::api::response::{Attacking, Moving};
 use crate::game::Game;
@@ -24,12 +25,12 @@ impl Actor for GameServer {
     type Context = Context<Self>;
 }
 
-impl Handler<api::inner::Request<Move>> for GameServer {
+impl Handler<inner::Request<Move>> for GameServer {
     type Result = ();
 
     fn handle(
         &mut self,
-        message: api::inner::Request<Move>,
+        message: inner::Request<Move>,
         _: &mut Self::Context,
     ) -> Self::Result {
         debug!("Appstate process move");
@@ -44,12 +45,12 @@ impl Handler<api::inner::Request<Move>> for GameServer {
     }
 }
 
-impl Handler<api::inner::Request<Attack>> for GameServer {
+impl Handler<inner::Request<Attack>> for GameServer {
     type Result = ();
 
     fn handle(
         &mut self,
-        message: api::inner::Request<Attack>,
+        message: inner::Request<Attack>,
         _: &mut Self::Context,
     ) -> Self::Result {
         debug!("Handle attack");
@@ -60,10 +61,10 @@ impl Handler<api::inner::Request<Attack>> for GameServer {
     }
 }
 
-impl Handler<api::request::NewClient> for GameServer {
+impl Handler<inner::NewClient> for GameServer {
     type Result = ();
 
-    fn handle(&mut self, client: api::request::NewClient, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, client: inner::NewClient, _: &mut Self::Context) -> Self::Result {
         self.clients.push(client.address);
 
         if self.clients.len() == 2 {

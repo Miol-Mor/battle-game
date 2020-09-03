@@ -32,15 +32,3 @@ impl Attack {
         serde_json::from_str(s).unwrap()
     }
 }
-
-#[derive(Debug, Message)]
-#[rtype(result = "()")]
-pub struct NewClient {
-    pub address: Addr<Websocket>,
-}
-
-impl NewClient {
-    pub fn new(address: Addr<Websocket>) -> NewClient {
-        NewClient { address }
-    }
-}
