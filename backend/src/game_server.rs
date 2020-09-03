@@ -28,11 +28,7 @@ impl Actor for GameServer {
 impl Handler<inner::Request<Move>> for GameServer {
     type Result = ();
 
-    fn handle(
-        &mut self,
-        message: inner::Request<Move>,
-        _: &mut Self::Context,
-    ) -> Self::Result {
+    fn handle(&mut self, message: inner::Request<Move>, _: &mut Self::Context) -> Self::Result {
         debug!("Appstate process move");
         let message = message.payload;
         match self.game.move_unit(message.from, message.to) {
@@ -48,11 +44,7 @@ impl Handler<inner::Request<Move>> for GameServer {
 impl Handler<inner::Request<Attack>> for GameServer {
     type Result = ();
 
-    fn handle(
-        &mut self,
-        message: inner::Request<Attack>,
-        _: &mut Self::Context,
-    ) -> Self::Result {
+    fn handle(&mut self, message: inner::Request<Attack>, _: &mut Self::Context) -> Self::Result {
         debug!("Handle attack");
         let message = Attacking::new(message.payload.from, message.payload.to);
 
@@ -122,11 +114,11 @@ impl GameServer {
         };
         let wall = Wall {};
 
-        match game.set_unit(0, 0, unit0) {
+        match game.set_unit(0, 0, Some(unit0)) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
-        match game.set_unit(3, 2, unit1) {
+        match game.set_unit(3, 2, Some(unit1)) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }

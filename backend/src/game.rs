@@ -24,10 +24,10 @@ impl Game {
         }
     }
 
-    pub fn set_unit(&mut self, x: u32, y: u32, unit: Unit) -> Result<(), &str> {
+    pub fn set_unit(&mut self, x: u32, y: u32, unit: Option<Unit>) -> Result<(), &str> {
         match self.field.get_hex(x, y) {
             Some(hex) => {
-                hex.unit = Some(unit);
+                hex.unit = unit;
                 Ok(())
             }
             None => Err("Error while setting unit: no hex"),
@@ -36,26 +36,27 @@ impl Game {
 
     fn get_unit(&mut self, x: u32, y: u32) -> Result<Option<Unit>, &str> {
         match self.field.get_hex(x, y) {
-            Some(hex) => {
-                Ok(hex.unit.clone())
-            }
-            None => Err("Error while getting unit: no such hex")
+            Some(hex) => Ok(hex.unit.clone()),
+            None => Err("Error while getting unit: no such hex"),
         }
     }
 
     pub fn set_content(&mut self, x: u32, y: u32, content: Content) -> Result<(), &str> {
         match self.field.get_hex(x, y) {
-            Some(hex) => {
-                hex.content = Some(content);
-                Ok(())
-            }
+            Some(hex) => Ok(()),
             None => Err("Error while setting content: no hex"),
         }
     }
 
     pub fn move_unit(&mut self, from: Point, to: Point) -> Result<Vec<Point>, &str> {
-        // something like check
-        Ok(vec![from, to])
+        match self.get_unit(from.x, from.y).unwrap() {
+            Some(unit) => {
+                self.set_unit(from.x, from.y, None);
+                self.set_unit(to.x, to.y, Some(unit));
+                Ok(vec![from, to])
+            }
+            None => Err("No unit found"),
+        }
     }
 }
 
