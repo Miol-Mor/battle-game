@@ -2,8 +2,8 @@ use actix::{Actor, Addr, AsyncContext, Handler, StreamHandler};
 use actix_web::web;
 use actix_web_actors::ws;
 
-use crate::appstate::GameServer;
 use crate::communicator::Msg;
+use crate::game_server::GameServer;
 
 use super::api;
 

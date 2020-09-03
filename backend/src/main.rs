@@ -6,7 +6,6 @@ use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 
 mod api;
-mod appstate;
 mod auth;
 mod communicator;
 mod config;
@@ -14,6 +13,7 @@ mod database;
 mod errors;
 mod game;
 mod game_objects;
+mod game_server;
 mod handlers;
 mod helpers;
 mod models;
@@ -29,7 +29,7 @@ extern crate log;
 async fn index(
     req: HttpRequest,
     stream: web::Payload,
-    data: web::Data<Addr<appstate::GameServer>>,
+    data: web::Data<Addr<game_server::GameServer>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(websocket::Websocket { server_addr: data }, &req, stream)
 }
@@ -37,7 +37,7 @@ async fn index(
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     pretty_env_logger::init();
-    let data = web::Data::new(appstate::GameServer::new().start());
+    let data = web::Data::new(game_server::GameServer::new().start());
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
