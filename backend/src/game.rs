@@ -34,6 +34,15 @@ impl Game {
         }
     }
 
+    fn get_unit(&mut self, x: u32, y: u32) -> Result<Option<Unit>, &str> {
+        match self.field.get_hex(x, y) {
+            Some(hex) => {
+                Ok(hex.unit.clone())
+            }
+            None => Err("Error while getting unit: no such hex")
+        }
+    }
+
     pub fn set_content(&mut self, x: u32, y: u32, content: Content) -> Result<(), &str> {
         match self.field.get_hex(x, y) {
             Some(hex) => {
