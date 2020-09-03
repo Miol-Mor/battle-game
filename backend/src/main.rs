@@ -1,9 +1,9 @@
 use crate::config::CONFIG;
 
+use actix::{Actor, Addr};
 use actix_web::middleware::Logger;
 use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
-use actix::{Addr, Actor};
 
 mod api;
 mod appstate;
@@ -31,13 +31,7 @@ async fn index(
     stream: web::Payload,
     data: web::Data<Addr<appstate::GameServer>>,
 ) -> Result<HttpResponse, Error> {
-    ws::start(
-        websocket::Websocket {
-            server_addr: data,
-        },
-        &req,
-        stream,
-    )
+    ws::start(websocket::Websocket { server_addr: data }, &req, stream)
 }
 
 #[actix_rt::main]
