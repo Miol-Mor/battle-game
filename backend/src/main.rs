@@ -29,11 +29,11 @@ extern crate log;
 async fn index(
     req: HttpRequest,
     stream: web::Payload,
-    data: web::Data<Addr<appstate::AppState>>,
+    data: web::Data<Addr<appstate::GameServer>>,
 ) -> Result<HttpResponse, Error> {
     ws::start(
         websocket::Websocket {
-            app_state_addr: data,
+            server_addr: data,
         },
         &req,
         stream,
@@ -43,7 +43,7 @@ async fn index(
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     pretty_env_logger::init();
-    let data = web::Data::new(appstate::AppState::new().start());
+    let data = web::Data::new(appstate::GameServer::new().start());
     HttpServer::new(move || {
         App::new()
             .app_data(data.clone())

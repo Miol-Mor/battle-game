@@ -14,17 +14,17 @@ use crate::game_objects::hex_objects::wall::Wall;
 use crate::game_objects::unit::Unit;
 
 #[derive(Debug)]
-pub struct AppState {
+pub struct GameServer {
     pub clients: Vec<Addr<Websocket>>,
     pub game: Game,
     pub current_player: u8,
 }
 
-impl Actor for AppState {
+impl Actor for GameServer {
     type Context = Context<Self>;
 }
 
-impl Handler<api::inner::Request<Move>> for AppState {
+impl Handler<api::inner::Request<Move>> for GameServer {
     type Result = ();
 
     fn handle(
@@ -44,7 +44,7 @@ impl Handler<api::inner::Request<Move>> for AppState {
     }
 }
 
-impl Handler<api::inner::Request<Attack>> for AppState {
+impl Handler<api::inner::Request<Attack>> for GameServer {
     type Result = ();
 
     fn handle(
@@ -60,7 +60,7 @@ impl Handler<api::inner::Request<Attack>> for AppState {
     }
 }
 
-impl Handler<api::request::NewClient> for AppState {
+impl Handler<api::request::NewClient> for GameServer {
     type Result = ();
 
     fn handle(&mut self, client: api::request::NewClient, _: &mut Self::Context) -> Self::Result {
@@ -72,9 +72,9 @@ impl Handler<api::request::NewClient> for AppState {
     }
 }
 
-impl AppState {
-    pub fn new() -> AppState {
-        AppState {
+impl GameServer {
+    pub fn new() -> GameServer {
+        GameServer {
             clients: vec![],
             game: Game::new(0, 0),
             current_player: 0,
