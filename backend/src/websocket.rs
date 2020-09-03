@@ -2,7 +2,7 @@ use actix::{Actor, Addr, AsyncContext, Handler, StreamHandler};
 use actix_web::web;
 use actix_web_actors::ws;
 
-use crate::appstate::AppState;
+use crate::appstate::GameServer;
 use crate::communicator::Msg;
 
 use super::api;
@@ -10,7 +10,7 @@ use super::api;
 /// Define http actor
 #[derive(Debug)]
 pub struct Websocket {
-    pub app_state_addr: web::Data<Addr<AppState>>,
+    pub server_addr: web::Data<Addr<GameServer>>,
 }
 
 impl Actor for Websocket {
@@ -39,13 +39,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                     let message = api::request::Move::from_str(&text);
                     let inner_message = api::inner::Request::new(ctx.address(), message);
 
-                    self.app_state_addr.do_send(inner_message);
+                    self.server_addr.do_send(inner_message);
                 }
                 api::request::CMD_ATTACK => {
                     let message = api::request::Attack::from_str(&text);
                     let inner_message = api::inner::Request::new(ctx.address(), message);
 
-                    self.app_state_addr.do_send(inner_message);
+                    self.server_addr.do_send(inner_message);
                 }
                 _ => {
                     debug!("Unknown command: {}", message.cmd);
@@ -56,7 +56,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         debug!("Client connected");
-        self.app_state_addr
+        self.server_addr
             .do_send(api::request::NewClient::new(ctx.address()));
     }
 
