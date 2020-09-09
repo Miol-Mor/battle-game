@@ -17,7 +17,7 @@ impl Message {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Point {
     pub x: u32,
     pub y: u32,

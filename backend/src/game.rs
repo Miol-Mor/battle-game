@@ -1,9 +1,11 @@
 use super::game_objects::grid::Grid;
+use super::game_objects::hex::Hex;
 use super::game_objects::hex_objects::content::Content;
 use super::game_objects::unit::Unit;
 
 use crate::api::common::Point;
 
+use rand::Rng;
 use serde::Serialize;
 
 #[derive(Serialize, Debug)]
@@ -26,24 +28,21 @@ impl Game {
 
     pub fn set_unit(&mut self, x: u32, y: u32, unit: Option<Unit>) -> Result<(), &str> {
         match self.field.get_hex(x, y) {
-            Some(hex) => {
-                hex.unit = unit;
-                Ok(())
-            }
+            Some(hex) => Ok(hex.set_unit(unit)),
             None => Err("Error while setting unit: no hex"),
         }
     }
 
     fn get_unit(&mut self, x: u32, y: u32) -> Result<Option<Unit>, &str> {
         match self.field.get_hex(x, y) {
-            Some(hex) => Ok(hex.unit.clone()),
+            Some(hex) => Ok(hex.get_unit()),
             None => Err("Error while getting unit: no such hex"),
         }
     }
 
-    pub fn set_content(&mut self, x: u32, y: u32, content: Content) -> Result<(), &str> {
+    pub fn set_content(&mut self, x: u32, y: u32, content: Option<Content>) -> Result<(), &str> {
         match self.field.get_hex(x, y) {
-            Some(hex) => Ok(()),
+            Some(hex) => Ok(hex.set_content(content)),
             None => Err("Error while setting content: no hex"),
         }
     }
@@ -57,6 +56,33 @@ impl Game {
             }
             None => Err("No unit found"),
         }
+    }
+
+    pub fn attack(&mut self, from: Point, to: Point) -> Result<(Vec<Hex>, Vec<Hex>), &str> {
+        let from_hex = self.field.get_hex(from.x, from.y).unwrap();
+        let from_unit = match from_hex.get_unit() {
+            Some(unit) => unit,
+            None => return Err("No unit found in 'from' hex"),
+        };
+
+        let to_hex = self.field.get_hex(to.x, to.y).unwrap();
+        let mut to_unit = match to_hex.get_unit_mut() {
+            Some(unit) => unit,
+            None => return Err("No unit found in 'to' hex"),
+        };
+
+        let mut rng = rand::thread_rng();
+        let dmg = rng.gen_range(from_unit.damage[0], from_unit.damage[1]);
+        to_unit.change_hp(-(dmg as i32));
+
+        let mut hurt: Vec<Hex> = vec![];
+        let mut die: Vec<Hex> = vec![];
+        if to_unit.hp == 0 {
+            die.push(to_hex.clone());
+        } else {
+            hurt.push(to_hex.clone());
+        }
+        Ok((hurt, die))
     }
 }
 
@@ -99,7 +125,7 @@ mod test {
             speed,
         };
 
-        let res = game.set_unit(x1, y1, unit.clone());
+        let res = game.set_unit(x1, y1, Some(unit.clone()));
         assert!(res.is_ok());
         assert!(game.field.get_hex(x1, y1).unwrap().unit.is_some());
         assert!(game.field.get_hex(x1, y1).unwrap().content.is_none());
@@ -110,7 +136,7 @@ mod test {
         assert_eq!(field_unit.damage, damage);
         assert_eq!(field_unit.speed, speed);
 
-        let res = game.set_unit(x2, y2, unit);
+        let res = game.set_unit(x2, y2, Some(unit));
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), "Error while setting unit: no hex");
     }
@@ -127,12 +153,12 @@ mod test {
         let mut game = Game::new(5, 5);
         let wall = Wall {};
 
-        let res = game.set_content(y1, x1, Content::Wall(wall.clone()));
+        let res = game.set_content(x1, y1, Some(Content::Wall(wall.clone())));
         assert!(res.is_ok());
-        assert!(game.field.get_hex(y1, x1).unwrap().unit.is_none());
-        assert!(game.field.get_hex(y1, x1).unwrap().content.is_some());
+        assert!(game.field.get_hex(x1, y1).unwrap().unit.is_none());
+        assert!(game.field.get_hex(x1, y1).unwrap().content.is_some());
 
-        let res = game.set_content(x2, y2, Content::Wall(wall));
+        let res = game.set_content(x2, y2, Some(Content::Wall(wall)));
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), "Error while setting content: no hex");
     }

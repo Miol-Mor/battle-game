@@ -22,6 +22,7 @@ impl Grid {
         Grid { hexes }
     }
 
+    // get hex with further change
     pub fn get_hex(&mut self, x: u32, y: u32) -> Option<&mut Hex> {
         self.hexes.iter_mut().find(|hex| hex.x == x && hex.y == y)
     }
