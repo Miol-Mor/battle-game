@@ -12,6 +12,24 @@ pub struct Hex {
     pub content: Option<Content>,
 }
 
+impl Hex {
+    pub fn get_unit(&self) -> Option<Unit> {
+        self.unit.clone()
+    }
+
+    pub fn get_unit_mut(&mut self) -> Option<&mut Unit> {
+        self.unit.as_mut()
+    }
+
+    pub fn set_unit(&mut self, unit: Option<Unit>) {
+        self.unit = unit;
+    }
+
+    pub fn set_content(&mut self, content: Option<Content>) {
+        self.content = content;
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::super::hex_objects::content::Content;

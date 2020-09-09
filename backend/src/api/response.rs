@@ -1,6 +1,7 @@
 use serde::Serialize;
 
-use super::common::Point;
+use crate::api::common::Point;
+use crate::game_objects::hex::Hex;
 
 const CMD_MOVE: &str = "moving";
 const CMD_ATTACK: &str = "attacking";
@@ -27,16 +28,16 @@ pub struct Attacking {
     cmd: String,
     from: Point,
     to: Point,
-    changes: Option<Changes>,
+    changes: Changes,
 }
 
 impl Attacking {
-    pub fn new(from: Point, to: Point) -> Attacking {
+    pub fn new(from: Point, to: Point, hurt: Vec<Hex>, die: Vec<Hex>) -> Attacking {
         Attacking {
             cmd: CMD_ATTACK.to_string(),
             from,
             to,
-            changes: None,
+            changes: Changes { hurt, die },
         }
     }
 }
@@ -56,5 +57,8 @@ impl ResponseError {
     }
 }
 
-#[derive(Serialize)]
-pub struct Changes {}
+#[derive(Serialize, Debug)]
+pub struct Changes {
+    hurt: Vec<Hex>,
+    die: Vec<Hex>,
+}

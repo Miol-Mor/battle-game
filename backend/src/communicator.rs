@@ -1,7 +1,6 @@
 use actix::{Addr, Message};
 
 use serde::Serialize;
-use std::sync::Mutex;
 
 use crate::websocket::Websocket;
 

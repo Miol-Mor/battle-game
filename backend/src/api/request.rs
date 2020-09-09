@@ -1,9 +1,8 @@
-use actix::{Addr, Message};
+use actix::Message;
 use serde::{Deserialize, Serialize};
 
 use super::common::Point;
 use crate::api::response::ResponseError;
-use crate::websocket::Websocket;
 
 pub const CMD_MOVE: &str = "move";
 pub const CMD_ATTACK: &str = "attack";

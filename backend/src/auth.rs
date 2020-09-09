@@ -1,5 +1,4 @@
 use crate::config::CONFIG;
-use crate::errors::ApiError;
 use argon2rs::argon2i_simple;
 
 pub fn hash(password: &str) -> String {
