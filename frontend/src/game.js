@@ -66,6 +66,10 @@ export class Game {
             }
         };
 
+        this.cmd_map.error = function(data) {
+            console.error(JSON.stringify(data));
+        };
+
         this.cmd_map['GFY! :D'] = function(data) {
             alert('GFY! :D');
         };
