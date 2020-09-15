@@ -11,10 +11,7 @@ pub struct Unit {
 impl Unit {
     pub fn change_hp(&mut self, diff: i32) {
         let hp = (self.hp as i32) + diff;
-        self.hp = match hp >= 0 {
-            true => hp as u32,
-            false => 0,
-        }
+        self.hp = if hp >= 0 { hp as u32 } else { 0 };
     }
 }
 

@@ -2,13 +2,13 @@ use actix::Message;
 use serde::{Deserialize, Serialize};
 
 use super::common::Point;
-use crate::api::response::ResponseError;
+use crate::api::response::Error;
 
 pub const CMD_MOVE: &str = "move";
 pub const CMD_ATTACK: &str = "attack";
 
 #[derive(Serialize, Deserialize, Debug, Message)]
-#[rtype(result = "Option<ResponseError>")]
+#[rtype(result = "Option<Error>")]
 pub struct Move {
     pub from: Point,
     pub to: Point,

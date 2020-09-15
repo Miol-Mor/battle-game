@@ -36,7 +36,10 @@ impl Handler<inner::Request<Move>> for GameServer {
                 let message = Moving::new(path);
                 self.broadcast(&message);
             }
-            Err(_) => unimplemented!(),
+            Err(error) => {
+                error!("Error: {:?}", error.context("move handle error"));
+                self.send_error(api::request::CMD_MOVE.to_string());
+            }
         }
     }
 }
@@ -53,7 +56,10 @@ impl Handler<inner::Request<Attack>> for GameServer {
                 self.broadcast(&message);
                 self.next_turn();
             }
-            Err(_) => unimplemented!(),
+            Err(error) => {
+                error!("Error: {:?}", error.context("attack handle error"));
+                self.send_error(api::request::CMD_ATTACK.to_string());
+            }
         }
     }
 }
@@ -102,6 +108,14 @@ impl GameServer {
 
         communicator
             .broadcast_everyone_but(&msg, self.clients[self.current_player as usize].clone());
+    }
+
+    fn send_error(&self, error_message: String) {
+        let error = api::response::Error::new(error_message);
+        let communicator = communicator::Communicator::new(self.clients.clone());
+
+        communicator
+            .broadcast_everyone_but(&error, self.clients[(self.current_player as usize)].clone());
     }
 
     pub fn new_game(&mut self) {

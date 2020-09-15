@@ -43,14 +43,14 @@ impl Attacking {
 }
 
 #[derive(Serialize, Debug)]
-pub struct ResponseError {
+pub struct Error {
     cmd: String,
     message: String,
 }
 
-impl ResponseError {
-    pub fn new(message: String) -> ResponseError {
-        ResponseError {
+impl Error {
+    pub fn new(message: String) -> Error {
+        Error {
             cmd: CMD_ERROR.to_string(),
             message,
         }
