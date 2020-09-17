@@ -1,6 +1,7 @@
 use actix::{Actor, Addr, Context, Handler};
 
 use serde::Serialize;
+use tracing::instrument;
 
 use crate::communicator;
 use crate::websocket::Websocket;
@@ -28,6 +29,7 @@ impl Actor for GameServer {
 impl Handler<inner::Request<Move>> for GameServer {
     type Result = ();
 
+    #[instrument(skip(self))]
     fn handle(&mut self, message: inner::Request<Move>, _: &mut Self::Context) -> Self::Result {
         debug!("Appstate process move");
         let message = message.payload;
@@ -37,7 +39,7 @@ impl Handler<inner::Request<Move>> for GameServer {
                 self.broadcast(&message);
             }
             Err(error) => {
-                error!("Error: {:?}", error.context("move handle error"));
+                error!("{:?}", error.wrap_err("move handle error"));
                 self.send_error(api::request::CMD_MOVE.to_string());
             }
         }
@@ -57,7 +59,7 @@ impl Handler<inner::Request<Attack>> for GameServer {
                 self.next_turn();
             }
             Err(error) => {
-                error!("Error: {:?}", error.context("attack handle error"));
+                error!("{:?}", error.wrap_err("attack handle error"));
                 self.send_error(api::request::CMD_ATTACK.to_string());
             }
         }
