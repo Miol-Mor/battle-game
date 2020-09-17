@@ -13,3 +13,6 @@ backend/**/*.rs.bk
 node_modules/
 package-lock.json
 yarn.lock
+
+# Webpack
+frontend/dist/main.js
