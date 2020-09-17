@@ -327,24 +327,32 @@ export class Game {
             case 'attack':
                 console.log('attack!!! charge!!!');
                 // animate attack
-                if (data.changes && data.changes.hurt) {
-                    data.changes.hurt.forEach(el => {
-                        this.change_hex(el);
-                    });
+                if (data.changes) {
+                    if (data.changes.hurt) {
+                        data.changes.hurt.forEach(el => {
+                            this.change_hex(el);
+                        });
+                    }
+                    if (data.changes.die) {
+                        data.changes.die.forEach(el => {
+                            this.kill_unit(el);
+                        });
+                    }
                 }
             break;
         }
     }
 
     // private
-    change_hex(data) {
-        console.log(data);
-        let hex = this.grid.hexes[data.x][data.y];
-        if (data.content) {
-            hex.set_content(data.content);
+    change_hex(hex_data) {
+        console.log(hex_data);
+        let hex = this.grid.hexes[hex_data.x][hex_data.y];
+        if (hex_data.content) {
+            hex.set_content(hex_data.content);
         }
-        if (data.unit) {
-            hex.change_unit(data.unit);
+
+        if (hex_data.unit) {
+            hex.change_unit(hex_data.unit);
         }
     }
 
@@ -371,6 +379,13 @@ export class Game {
 
         from_hex.unset_unit();
         to_hex.set_unit(unit);
+    }
+
+    // private
+    kill_unit(hex_data) {
+        let hex = this.grid.hexes[hex_data.x][hex_data.y];
+        hex.erase_unit();
+        hex.unset_unit();
     }
 
     // dev
