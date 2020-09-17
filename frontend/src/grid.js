@@ -51,6 +51,7 @@ class Hex extends PIXI.Graphics {
         this.draw_unit(unit);
     }
 
+    // private
     // draw unit here
     draw_unit(unit) {
         this.addChild(unit.sprite);
@@ -58,6 +59,10 @@ class Hex extends PIXI.Graphics {
 
     unset_unit() {
         this.unit = null;
+    }
+
+    erase_unit() {
+        this.removeChild(this.unit.sprite);
     }
 
     change_unit(params) {
