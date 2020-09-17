@@ -4,10 +4,11 @@ use crate::game_objects::hex::Hex;
 use crate::game_objects::hex_objects::content::Content;
 use crate::game_objects::unit::Unit;
 
-use anyhow::{Context, Result};
+use eyre::{Result, WrapErr};
 use rand::Rng;
 use serde::Serialize;
 use thiserror::Error;
+use tracing::instrument;
 
 #[derive(Serialize, Debug)]
 pub struct Game {
@@ -37,47 +38,43 @@ impl Game {
         }
     }
 
+    #[instrument(skip(self))]
     pub fn move_unit(&mut self, from: Point, to: Point) -> Result<Vec<Point>> {
         match self
             .get_unit(from.x, from.y)
-            .context(format!("can not move unit from x={}, y={}", from.x, from.y))?
+            .wrap_err("failed to move unit; failed to get unit")?
         {
             Some(unit) => {
                 self.set_unit(from.x, from.y, None)
-                    .context(format!("can not move unit from x={}, y={}", from.x, from.y))?;
+                    .wrap_err("failed to move unit; failed to unset unit")?;
                 self.set_unit(to.x, to.y, Some(unit))
-                    .context(format!("can not move unit to x={}, y={}", to.x, to.y))?;
+                    .wrap_err("failed to move unit; failed to set unit")?;
                 Ok(vec![from, to])
             }
-            None => Err(GameError::NoUnit)
-                .context(format!("can not get unit from x={} y={}", from.x, from.y))?,
+            None => Err(GameError::NoUnit).wrap_err("failed to get unit on move")?,
         }
     }
 
+    #[instrument(skip(self))]
     pub fn attack(&mut self, from: Point, to: Point) -> Result<(Vec<Hex>, Vec<Hex>)> {
         let from_hex = match self.get_hex(from.x, from.y) {
             Some(hex) => hex,
-            None => Err(GameError::NoHex)
-                .context(format!("can not attack from x={} y={}", from.x, from.y))?,
+            None => Err(GameError::NoHex).wrap_err("failed to attack from")?,
         };
 
         let from_unit = match from_hex.get_unit() {
             Some(unit) => unit,
-            None => Err(GameError::NoUnit)
-                .context(format!("can not attack from x={} y={}", from.x, from.y))?,
+            None => Err(GameError::NoUnit).wrap_err("failed to attack from")?,
         };
 
         let to_hex = match self.get_hex(to.x, to.y) {
             Some(hex) => hex,
-            None => {
-                Err(GameError::NoHex).context(format!("can not attack to x={} y={}", to.x, to.y))?
-            }
+            None => Err(GameError::NoHex).wrap_err("failed to attack to")?,
         };
 
         let to_unit = match to_hex.get_unit_mut() {
             Some(unit) => unit,
-            None => Err(GameError::NoUnit)
-                .context(format!("can not attack to x={} y={}", to.x, to.y))?,
+            None => Err(GameError::NoUnit).wrap_err("failed to attack to")?,
         };
 
         let mut rng = rand::thread_rng();
@@ -98,50 +95,47 @@ impl Game {
 
     // Unit staff
     // TODO: remvoe pub after creating new games from presets
+    #[instrument(skip(self))]
     pub fn set_unit(&mut self, x: u32, y: u32, unit: Option<Unit>) -> Result<()> {
         match self.get_hex(x, y) {
             Some(hex) => {
                 hex.set_unit(unit);
                 Ok(())
             }
-            None => {
-                Err(GameError::NoHex).context(format!("can not set unit to x={} y={}", x, y))?
-            }
+            None => Err(GameError::NoHex).wrap_err("failed to set unit")?,
         }
     }
 
+    #[instrument(skip(self))]
     fn get_unit(&mut self, x: u32, y: u32) -> Result<Option<Unit>> {
         match self.get_hex(x, y) {
             Some(hex) => Ok(hex.get_unit()),
-            None => {
-                Err(GameError::NoHex).context(format!("can not get unit from x={} y={}", x, y))?
-            }
+            None => Err(GameError::NoHex).wrap_err("failed to get unit")?,
         }
     }
 
     // Hex stuff
+    #[instrument(skip(self))]
     fn get_hex(&mut self, x: u32, y: u32) -> Option<&mut Hex> {
         self.field.get_hex(x, y)
     }
 
     // Content stuff
     // TODO: remvoe pub after creating new games from presets
+    #[instrument(skip(self))]
     pub fn set_content(&mut self, x: u32, y: u32, content: Option<Content>) -> Result<()> {
         match self.get_hex(x, y) {
             Some(hex) => {
                 hex.set_content(content);
                 Ok(())
             }
-            None => {
-                Err(GameError::NoHex).context(format!("can not set content x={} y={}", x, y))?
-            }
+            None => Err(GameError::NoHex).wrap_err("failed to set content")?,
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::super::game_objects::hex_objects::content::Content;
     use super::super::game_objects::hex_objects::wall::Wall;
     use super::*;
 

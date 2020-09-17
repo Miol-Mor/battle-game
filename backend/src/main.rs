@@ -26,6 +26,9 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 
+use tracing::instrument;
+
+#[instrument(skip(stream))]
 async fn index(
     req: HttpRequest,
     stream: web::Payload,
@@ -35,8 +38,10 @@ async fn index(
 }
 
 #[actix_rt::main]
+#[instrument]
 async fn main() -> std::io::Result<()> {
-    pretty_env_logger::init();
+    install_tracing();
+    color_eyre::install().unwrap();
     let data = web::Data::new(game_server::GameServer::new().start());
     HttpServer::new(move || {
         App::new()
@@ -49,4 +54,21 @@ async fn main() -> std::io::Result<()> {
     .bind(CONFIG.address.clone())?
     .run()
     .await
+}
+
+fn install_tracing() {
+    use tracing_error::ErrorLayer;
+    use tracing_subscriber::prelude::*;
+    use tracing_subscriber::{fmt, EnvFilter};
+
+    let fmt_layer = fmt::layer().with_target(false);
+    let filter_layer = EnvFilter::try_from_default_env()
+        .or_else(|_| EnvFilter::try_new("info"))
+        .unwrap();
+
+    tracing_subscriber::registry()
+        .with(filter_layer)
+        .with(fmt_layer)
+        .with(ErrorLayer::default())
+        .init();
 }
