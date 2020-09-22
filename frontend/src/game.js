@@ -248,6 +248,7 @@ export class Game {
         this.info.text = 'Info:\n';
     }
 
+    // private
     set_info(params) {
         this.clear_info();
         for (let [key, value] of Object.entries(params)) {
@@ -264,14 +265,16 @@ export class Game {
                 hex.hitArea = hex.polygon;
                 hex.on('click', this.process_click.bind(this));
                 hex.on('mouseover', this.process_mouseover.bind(this));
+                hex.on('mouseout', this.process_mouseout.bind(this));
             }
         }
     }
 
     // private
     process_mouseover(event) {
-        this.cur_hex = event.target;
-        this.show_tooltip();
+        this.cur_hex = event.currentTarget;
+        event.currentTarget.highlight();
+        this.show_tooltip(event.currentTarget);
     }
 
     // private
@@ -284,6 +287,13 @@ export class Game {
                 this.clear_info();
             }
         }
+    }
+
+    // private
+    process_mouseout(event) {
+        event.currentTarget.dim();
+        this.clear_info();
+        this.cur_hex = null;
     }
 
 
