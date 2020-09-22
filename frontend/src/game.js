@@ -31,6 +31,7 @@ export class Game {
         // current player's move and attack
         this.cur_move = {from: null, to: null};
         this.cur_attack = null;
+        this.cur_hex = null;
 
         // graphic constants
         this.BACKGROUND_COLOR = 0xd6b609;
@@ -55,6 +56,7 @@ export class Game {
             if (this.state === this.STATES.MOVE_TO) {
                 this.change_state(this.STATES.ATTACK);
             }
+            this.show_tooltip();
         };
 
         this.cmd_map.attacking = function(data) {
@@ -64,6 +66,7 @@ export class Game {
             if (this.state === this.STATES.ATTACK) {
                 this.change_state(this.STATES.WAIT);
             }
+            this.show_tooltip();
         };
 
         this.cmd_map.error = function(data) {
@@ -260,18 +263,26 @@ export class Game {
                 hex.interactive = true;
                 hex.hitArea = hex.polygon;
                 hex.on('click', this.process_click.bind(this));
-                hex.on('mouseover', this.show_tooltip.bind(this));
+                hex.on('mouseover', this.process_mouseover.bind(this));
             }
         }
     }
 
     // private
-    show_tooltip(event) {
-        if (event.target.unit !== null) {
-            this.set_info(event.target.unit.params);
-        }
-        else {
-            this.clear_info();
+    process_mouseover(event) {
+        this.cur_hex = event.target;
+        this.show_tooltip();
+    }
+
+    // private
+    show_tooltip() {
+        if (this.cur_hex) {
+            if (this.cur_hex.unit !== null) {
+                this.set_info(this.cur_hex.unit.params);
+            }
+            else {
+                this.clear_info();
+            }
         }
     }
 
