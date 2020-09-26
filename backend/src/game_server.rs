@@ -19,7 +19,13 @@ use crate::game_objects::unit::Unit;
 pub struct GameServer {
     pub clients: Vec<Addr<Websocket>>,
     pub game: Game,
-    pub current_player: u8,
+    pub current_player: usize,
+}
+
+impl GameServer {
+    pub fn check_player_turn(&self, addr: &Addr<Websocket>) -> bool {
+        self.clients[self.current_player] == *addr
+    }
 }
 
 impl Actor for GameServer {
@@ -29,9 +35,12 @@ impl Actor for GameServer {
 impl Handler<inner::Request<Move>> for GameServer {
     type Result = ();
 
-    #[instrument(skip(self))]
     fn handle(&mut self, message: inner::Request<Move>, _: &mut Self::Context) -> Self::Result {
-        debug!("Appstate process move");
+        debug!("Handle move");
+        if !self.check_player_turn(&message.sender) {
+            debug!("Error: wrong player move");
+            return;
+        }
         let message = message.payload;
         match self.game.move_unit(message.from, message.to) {
             Ok(path) => {
@@ -51,6 +60,10 @@ impl Handler<inner::Request<Attack>> for GameServer {
 
     fn handle(&mut self, message: inner::Request<Attack>, _: &mut Self::Context) -> Self::Result {
         debug!("Handle attack");
+        if !self.check_player_turn(&message.sender) {
+            debug!("Error: wrong player attack");
+            return;
+        }
         let message = message.payload;
         match self.game.attack(message.from.clone(), message.to.clone()) {
             Ok((hurt, die)) => {
@@ -94,9 +107,7 @@ impl GameServer {
     }
 
     pub fn broadcast<T: Serialize>(&self, msg: &T) {
-        let communicator = communicator::Communicator::new(self.clients.clone());
-
-        communicator.broadcast(msg)
+        communicator::broadcast(msg, self.clients.clone())
     }
 
     fn change_player(&mut self) {
@@ -106,18 +117,12 @@ impl GameServer {
 
     fn send_turn(&self) {
         let msg = api::common::Message::new(api::response::CMD_TURN);
-        let communicator = communicator::Communicator::new(self.clients.clone());
-
-        communicator
-            .broadcast_everyone_but(&msg, self.clients[self.current_player as usize].clone());
+        communicator::broadcast(&msg, vec![self.clients[self.current_player].clone()]);
     }
 
     fn send_error(&self, error_message: String) {
         let error = api::response::Error::new(error_message);
-        let communicator = communicator::Communicator::new(self.clients.clone());
-
-        communicator
-            .broadcast_everyone_but(&error, self.clients[(self.current_player as usize)].clone());
+        communicator::broadcast(&error, vec![self.clients[self.current_player].clone()]);
     }
 
     pub fn new_game(&mut self) {
@@ -155,7 +160,7 @@ impl GameServer {
         }
 
         self.broadcast(&game);
-        self.next_turn();
+        self.send_turn();
         self.game = game;
     }
 }
