@@ -60,7 +60,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
             .do_send(api::inner::NewClient::new(ctx.address()));
     }
 
-    fn finished(&mut self, _ctx: &mut Self::Context) {
+    fn finished(&mut self, ctx: &mut Self::Context) {
         debug!("Client disconnected");
+        self.server_addr
+            .do_send(api::inner::LooseClient::new(ctx.address()));
     }
 }

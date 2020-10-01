@@ -78,6 +78,20 @@ impl Handler<inner::NewClient> for GameServer {
     }
 }
 
+impl Handler<inner::LooseClient> for GameServer {
+    type Result = ();
+
+    fn handle(&mut self, client: inner::LooseClient, _: &mut Self::Context) -> Self::Result {
+        let index = self
+            .clients
+            .iter()
+            .position(|address| *address == client.address)
+            .unwrap();
+
+        self.clients.remove(index);
+    }
+}
+
 impl GameServer {
     pub fn new() -> GameServer {
         GameServer {
