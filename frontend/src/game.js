@@ -65,6 +65,10 @@ export class Game {
             this.redraw_field(data);
             if (this.state === this.STATES.ATTACK) {
                 this.change_state(this.STATES.WAIT);
+                let hex = this.grid.hexes[this.cur_move.to.x][this.cur_move.to.y];
+                if (hex.unit) {
+                    hex.unit.stop_pulse();
+                }
             }
             this.show_tooltip();
         };
@@ -143,6 +147,11 @@ export class Game {
             case this.STATES.MOVE_FROM:
                 this.move_from(event.target.coords);
                 this.change_state('move_to');
+
+                let hex = this.grid.hexes[event.target.coords.x][event.target.coords.y];
+                if (hex.unit) {
+                    hex.unit.start_pulse();
+                }
             break;
 
             case this.STATES.MOVE_TO:
@@ -387,6 +396,11 @@ export class Game {
     create_unit(texture, img_size, params, x, y) {
         let unit = new Unit(texture, img_size, params);
         this.grid.hexes[x][y].set_unit(unit);
+
+        this.app.ticker.add(() => {
+            unit.pulse();
+        });
+
         return unit;
     }
 
