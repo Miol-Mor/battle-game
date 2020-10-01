@@ -39,7 +39,7 @@ export class Game {
         // set map of commands
         this.cmd_map = {};
         this.cmd_map.field = function(data) {
-            this.check_state(this.STATES.PREPARE);
+            // this.check_state(this.STATES.PREPARE);
             this.create_field(data);
             this.change_state(this.STATES.WAIT);
         };

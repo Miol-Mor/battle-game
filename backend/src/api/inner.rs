@@ -28,3 +28,15 @@ impl NewClient {
         NewClient { address }
     }
 }
+
+#[derive(Debug, Message)]
+#[rtype(result = "()")]
+pub struct LooseClient {
+    pub address: Addr<Websocket>,
+}
+
+impl LooseClient {
+    pub fn new(address: Addr<Websocket>) -> LooseClient {
+        LooseClient { address }
+    }
+}
