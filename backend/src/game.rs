@@ -45,10 +45,10 @@ impl Game {
             .wrap_err("failed to move unit; failed to get unit")?
         {
             Some(unit) => {
-                self.set_unit(from.x, from.y, None)
-                    .wrap_err("failed to move unit; failed to unset unit")?;
                 self.set_unit(to.x, to.y, Some(unit))
                     .wrap_err("failed to move unit; failed to set unit")?;
+                self.set_unit(from.x, from.y, None)
+                    .wrap_err("failed to move unit; failed to unset unit")?;
                 Ok(vec![from, to])
             }
             None => Err(GameError::NoUnit).wrap_err("failed to get unit on move")?,
@@ -139,6 +139,29 @@ mod test {
     use super::super::game_objects::hex_objects::wall::Wall;
     use super::*;
 
+    // Test game is a game with 2x2 field
+    // There are 2 units (U) and 1 wall (W) on it
+    // U | W
+    // -----
+    //   | U
+    fn test_game() -> (Game, Unit, Wall) {
+        let mut game = Game::new(2, 2);
+        let unit = Unit {
+            player: 1,
+            hp: 5,
+            damage: [5, 5],
+            speed: 3,
+        };
+        let wall = Wall {};
+        assert!(game.set_unit(0, 0, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(1, 1, Some(unit.clone())).is_ok());
+        assert!(game
+            .set_content(0, 1, Some(Content::Wall(wall.clone())))
+            .is_ok());
+
+        (game, unit, wall)
+    }
+
     #[test]
     fn new() {
         let num_x = 8;
@@ -167,20 +190,11 @@ mod test {
 
     #[test]
     fn set_get_unit() {
-        let mut game = Game::new(2, 2);
-        let unit = Unit {
-            player: 1,
-            hp: 10,
-            damage: [2, 3],
-            speed: 3,
-        };
+        let (mut game, unit, _) = test_game();
 
-        assert!(game.set_unit(0, 1, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(1, 0, None).is_ok());
-
-        assert!(game.get_unit(0, 1).unwrap().is_some());
+        assert!(game.get_unit(0, 0).unwrap().is_some());
         assert!(game.get_unit(1, 0).unwrap().is_none());
-        assert!(game.get_unit(0, 0).unwrap().is_none());
+        assert!(game.get_unit(0, 1).unwrap().is_none());
 
         let result = game.set_unit(4, 5, Some(unit.clone()));
         assert!(result.is_err());
@@ -199,11 +213,7 @@ mod test {
 
     #[test]
     fn set_content() {
-        let mut game = Game::new(2, 2);
-        let wall = Wall {};
-        assert!(game
-            .set_content(0, 1, Some(Content::Wall(wall.clone())))
-            .is_ok());
+        let (mut game, _, wall) = test_game();
 
         let result = game.set_content(4, 5, Some(Content::Wall(wall.clone())));
         assert!(result.is_err());
@@ -214,33 +224,31 @@ mod test {
     }
 
     #[test]
-    fn move_unit() {
-        let mut game = Game::new(2, 2);
-        let unit = Unit {
-            player: 1,
-            hp: 10,
-            damage: [2, 3],
-            speed: 3,
-        };
-        assert!(game.set_unit(0, 0, Some(unit)).is_ok());
-
-        // Move unit from it's position to another existing position
+    fn move_unit_success() {
+        let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
-        let to = Point { x: 1, y: 1 };
-        assert!(game.move_unit(from, to).is_ok());
-
-        // Move unit from it's position out of field
-        let from = Point { x: 1, y: 1 };
+        let to = Point { x: 0, y: 1 };
+        assert!(game.move_unit(from.clone(), to.clone()).is_ok());
+        assert!(game.get_unit(from.x, from.y).unwrap().is_none());
+        assert!(game.get_unit(to.x, to.y).unwrap().is_some());
+    }
+    #[test]
+    fn move_unit_out_from_field() {
+        let (mut game, _, _) = test_game();
+        let from = Point { x: 0, y: 0 };
         let to = Point { x: 5, y: 6 };
 
-        let result = game.move_unit(from, to);
+        let result = game.move_unit(from.clone(), to.clone());
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
             _ => assert!(false, "wrong error"),
         }
-
-        // Move unit from hex that out of field
+        assert!(game.get_unit(from.x, from.y).unwrap().is_some());
+    }
+    #[test]
+    fn move_unit_from_hex_that_out_of_field() {
+        let (mut game, _, _) = test_game();
         let from = Point { x: 5, y: 5 };
         let to = Point { x: 5, y: 6 };
 
@@ -250,8 +258,10 @@ mod test {
             Some(GameError::NoHex) => {}
             _ => assert!(false, "wrong error"),
         }
-
-        // Move unit from existing hex with no unit
+    }
+    #[test]
+    fn move_unit_from_hex_without_unit() {
+        let (mut game, _, _) = test_game();
         let from = Point { x: 1, y: 0 };
         let to = Point { x: 0, y: 1 };
 
@@ -263,41 +273,44 @@ mod test {
         }
     }
     #[test]
-    fn attack_unit() {
-        let mut game = Game::new(2, 2);
+    fn attack_unit_success_hurt() {
+        let (mut game, unit, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 1, y: 1 };
-        let unit = Unit {
-            player: 1,
-            hp: 10,
-            damage: [2, 2],
-            speed: 3,
+        // Customize unit by increasing it's damage
+        let attacking_unit = Unit {
+            damage: [unit.hp - 1, unit.hp - 1],
+            ..unit
         };
-        assert!(game.set_unit(from.x, from.y, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(to.x, to.y, Some(unit.clone())).is_ok());
+        assert!(game
+            .set_unit(from.x, from.y, Some(attacking_unit.clone()))
+            .is_ok());
 
-        // Unit attacks another unit and it hurts
         let result = game.attack(from.clone(), to.clone());
 
         assert!(result.is_ok());
         let (hurt, die) = result.unwrap();
         assert_eq!(hurt.len(), 1);
         assert_eq!(die.len(), 0);
-        assert_eq!(hurt[0].unit.as_ref().unwrap().hp, unit.hp - unit.damage[0]);
+        assert_eq!(
+            hurt[0].unit.as_ref().unwrap().hp,
+            unit.hp - attacking_unit.damage[0]
+        );
 
         let hurt_unit = game.get_unit(to.x, to.y).unwrap().unwrap();
-        assert_eq!(hurt_unit.hp, unit.hp - unit.damage[0]);
-
-        // Unit attacks another and it dies attack > hp
-        let mut game = Game::new(2, 2);
-        let unit = Unit {
-            player: 1,
-            hp: 2,
-            damage: [5, 5],
-            speed: 3,
+        assert_eq!(hurt_unit.hp, unit.hp - attacking_unit.damage[0]);
+    }
+    #[test]
+    fn attack_unit_success_die_attack_more_then_hp() {
+        let (mut game, unit, _) = test_game();
+        let from = Point { x: 0, y: 0 };
+        let to = Point { x: 1, y: 1 };
+        // Customize unit by increasing it's damage
+        let attacking_unit = Unit {
+            damage: [unit.hp + 1, unit.hp + 1],
+            ..unit
         };
-        assert!(game.set_unit(0, 0, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(1, 1, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(from.x, from.y, Some(attacking_unit)).is_ok());
 
         let result = game.attack(from.clone(), to.clone());
         assert!(result.is_ok());
@@ -305,17 +318,18 @@ mod test {
         assert_eq!(hurt.len(), 0);
         assert_eq!(die.len(), 1);
         assert_eq!(die[0].unit.as_ref().unwrap().hp, 0);
-
-        // Unit attacks another and it dies attack = hp
-        let mut game = Game::new(2, 2);
-        let unit = Unit {
-            player: 1,
-            hp: 5,
-            damage: [5, 5],
-            speed: 3,
+    }
+    #[test]
+    fn attack_unit_success_die_attack_equals_hp() {
+        let (mut game, unit, _) = test_game();
+        let from = Point { x: 0, y: 0 };
+        let to = Point { x: 1, y: 1 };
+        // Customize unit by make it's damage equal to hp of another unit
+        let attacking_unit = Unit {
+            damage: [unit.hp, unit.hp],
+            ..unit
         };
-        assert!(game.set_unit(0, 0, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(1, 1, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(from.x, from.y, Some(attacking_unit)).is_ok());
 
         let result = game.attack(from.clone(), to.clone());
         assert!(result.is_ok());
@@ -323,9 +337,12 @@ mod test {
         assert_eq!(hurt.len(), 0);
         assert_eq!(die.len(), 1);
         assert_eq!(die[0].unit.as_ref().unwrap().hp, 0);
-
-        // Attack but from empty hex
+    }
+    #[test]
+    fn attack_from_empty_hex() {
+        let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 1 };
+        let to = Point { x: 1, y: 1 };
         let result = game.attack(from.clone(), to.clone());
 
         assert!(result.is_err());
@@ -333,8 +350,10 @@ mod test {
             Some(GameError::NoUnit) => {}
             _ => assert!(false, "wrong error"),
         }
-
-        // Attack but to empte hex
+    }
+    #[test]
+    fn attack_to_empty_hex() {
+        let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 0, y: 1 };
         let result = game.attack(from.clone(), to.clone());
@@ -344,9 +363,12 @@ mod test {
             Some(GameError::NoUnit) => {}
             _ => assert!(false, "wrong error"),
         }
-
-        // Attack but from hex that out of grid
+    }
+    #[test]
+    fn attack_from_hex_out_of_grid() {
+        let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 10 };
+        let to = Point { x: 1, y: 1 };
         let result = game.attack(from.clone(), to.clone());
 
         assert!(result.is_err());
@@ -354,8 +376,10 @@ mod test {
             Some(GameError::NoHex) => {}
             _ => assert!(false, "wrong error"),
         }
-
-        // Attack but to hex that out of grid
+    }
+    #[test]
+    fn attack_to_hex_out_of_grid() {
+        let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 0, y: 10 };
         let result = game.attack(from.clone(), to.clone());
