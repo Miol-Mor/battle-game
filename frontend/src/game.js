@@ -5,44 +5,30 @@ import { Unit } from './unit';
 
 export class Game {
     constructor() {
-        // app - PIXI aplication, used for this game
-        this.app = null;
-        // grid - grid for this game (Hex_grid)
-        this.grid = null;
-
         // Websocket we use to contact with server
         this.socket = null;
-
-        // players_num - number of players (for the future)
-        this.players_num = 2;
-        // WHAT??? my_num - number of player using this client
-        this.my_num = 1;
+        // app - PIXI aplication, used for this game
+        this.app = null;
 
         // array of game states
         this.STATES = {
-            PREPARE: 'prepare',
             MOVE_FROM: 'move_from',
             MOVE_TO: 'move_to',
             ATTACK: 'attack',
             WAIT: 'wait',
             END: 'end'
         };
-        this.state = this.STATES.PREPARE;
-        // current player's move and attack
-        this.cur_move = {from: null, to: null};
-        this.cur_attack = null;
-        // hex player hover on - needed to redraw information when something happens
-        this.cur_hex = null;
 
         // graphic constants
         this.BACKGROUND_COLOR = 0xd6b609;
 
         // set map of commands
         this.cmd_map = {};
+        // reset game (or create a new one if doesn't exist)
         this.cmd_map.field = function(data) {
-            this.check_state(this.STATES.PREPARE);
-            this.create_field(data);
+            this.create_new_field(data);
             this.change_state(this.STATES.WAIT);
+            this.show_tooltip();
         };
 
         this.cmd_map.turn = function(data) {
@@ -85,7 +71,9 @@ export class Game {
     }
 
     // (needed, because constructor cannot be async)
-    start() {
+    async start() {
+        this.create_stage();
+        await this.load_images();
         this.create_socket();
     }
 
@@ -174,16 +162,37 @@ export class Game {
     }
 
 
-    // Create field functions
+    // Create new field functions
     // private
-    async create_field(field_data) {
+    create_new_field(field_data) {
         // correct order of functions is important
-        this.create_stage();
-        await this.load_images();
+        this.set_defaults();
+        this.clear_app();
         this.create_grid(field_data);
         this.set_units_start_pos(field_data);
         this.create_info();
         this.set_hex_click_handlers();
+    }
+
+    // set start values of game fields
+    set_defaults() {
+        // grid - grid for this game (Hex_grid)
+        this.grid = null;
+
+        // players_num - number of players (for the future)
+        this.players_num = 2;
+        // my_num - number of player using this client
+        this.my_num = 1;
+
+        // current player's move and attack
+        this.cur_move = {from: null, to: null};
+        this.cur_attack = null;
+        this.cur_hex = null;
+    }
+
+    // remove everything from the PIXI stage
+    clear_app() {
+        this.app.stage.removeChildren();
     }
 
     // private
