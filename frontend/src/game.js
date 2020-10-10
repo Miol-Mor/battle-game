@@ -15,7 +15,7 @@ export class Game {
 
         // players_num - number of players (for the future)
         this.players_num = 2;
-        // my_num - number of player using this client
+        // WHAT??? my_num - number of player using this client
         this.my_num = 1;
 
         // array of game states
@@ -31,6 +31,7 @@ export class Game {
         // current player's move and attack
         this.cur_move = {from: null, to: null};
         this.cur_attack = null;
+        // hex player hover on - needed to redraw information when something happens
         this.cur_hex = null;
 
         // graphic constants
@@ -39,7 +40,7 @@ export class Game {
         // set map of commands
         this.cmd_map = {};
         this.cmd_map.field = function(data) {
-            // this.check_state(this.STATES.PREPARE);
+            this.check_state(this.STATES.PREPARE);
             this.create_field(data);
             this.change_state(this.STATES.WAIT);
         };
@@ -47,6 +48,7 @@ export class Game {
         this.cmd_map.turn = function(data) {
             this.check_state(this.STATES.WAIT);
             this.change_state(this.STATES.MOVE_FROM);
+            this.show_tooltip();
         };
 
         this.cmd_map.moving = function(data) {
@@ -168,6 +170,7 @@ export class Game {
                 console.log('default click');
             break;
         }
+        this.show_tooltip();
     }
 
 
@@ -254,7 +257,8 @@ export class Game {
 
     // private
     clear_info() {
-        this.info.text = 'Info:\n';
+        this.info.text = this.turn_info();
+        this.info.text += 'Info:\n';
     }
 
     // private
@@ -262,6 +266,22 @@ export class Game {
         this.clear_info();
         for (let [key, value] of Object.entries(params)) {
             this.info.text += `${key}: ${value}\n`;
+        }
+    }
+
+    // private
+    turn_info() {
+        switch (this.state) {
+            case this.STATES.WAIT:
+                return 'Wait for opponents turn\n';
+            case this.STATES.MOVE_FROM:
+                return 'Your turn: Select unit\n';
+            case this.STATES.MOVE_TO:
+                return 'Your turn: Move unit\n';
+            case this.STATES.ATTACK:
+                return 'Your turn: Attack\n';
+            default:
+                return 'Just wait a second\n';
         }
     }
 
@@ -288,13 +308,13 @@ export class Game {
 
     // private
     show_tooltip() {
-        if (this.cur_hex) {
-            if (this.cur_hex.unit !== null) {
-                this.set_info(this.cur_hex.unit.params);
-            }
-            else {
-                this.clear_info();
-            }
+        // if player hovers on hex with unit, show info about it
+        if (this.cur_hex && this.cur_hex.unit) {
+            this.set_info(this.cur_hex.unit.params);
+        }
+        // else just show ordinary info
+        else if (this.info) { // it's a crutch, because we receive 'turn' message before 'info' block created
+            this.clear_info();
         }
     }
 
