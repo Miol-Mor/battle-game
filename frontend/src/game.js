@@ -132,7 +132,7 @@ export class Game {
     // Game cycle
     // process messages from the server
     // private
-    process_message() {
+    process_message(event) {
         let data = JSON.parse(event.data);
         console.log(data);
         // TODO: we need to wait here all previous actions done

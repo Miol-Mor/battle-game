@@ -94,7 +94,7 @@ impl Game {
     // Private api
 
     // Unit staff
-    // TODO: remvoe pub after creating new games from presets
+    // TODO: remove pub after creating new games from presets
     #[instrument(skip(self))]
     pub fn set_unit(&mut self, x: u32, y: u32, unit: Option<Unit>) -> Result<()> {
         match self.get_hex(x, y) {
@@ -121,7 +121,7 @@ impl Game {
     }
 
     // Content stuff
-    // TODO: remvoe pub after creating new games from presets
+    // TODO: remove pub after creating new games from presets
     #[instrument(skip(self))]
     pub fn set_content(&mut self, x: u32, y: u32, content: Option<Content>) -> Result<()> {
         match self.get_hex(x, y) {

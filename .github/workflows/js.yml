@@ -18,3 +18,6 @@ jobs:
       # Install deps and run linter for frontend
       - run: npm install && npm run lint
         working-directory: frontend
+      # Run tests for frontend
+      - run: npm run test
+        working-directory: frontend
