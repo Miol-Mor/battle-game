@@ -5,5 +5,5 @@ test('Default grid', () => {
     let app = new PIXI.Application();
     document.body.appendChild(app.view);
     let grid = new Hex_grid(app);
-    expect(grid.row_n).toBe(6);
+    expect(grid.num_x).toBe(8);
 });
