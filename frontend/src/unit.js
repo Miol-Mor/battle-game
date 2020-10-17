@@ -10,7 +10,7 @@ export class Unit {
 
         this.origin_img_size = img_size;
         this.pulse_state = false;
-        this.pulse_count = 1;
+        this.pulse_count = 0;
     }
 
     // scale sprite to fit size
@@ -26,7 +26,7 @@ export class Unit {
 
     stop_pulse() {
         this.pulse_state = false;
-        this.pulse_count = 1;
+        this.pulse_count = 0;
         this.scale_sprite(this.origin_img_size);
     }
 
@@ -34,8 +34,8 @@ export class Unit {
         if (this.pulse_state) {
             this.pulse_count += 0.05;
 
-            this.sprite.scale.x = Math.sin(this.pulse_count);
-            this.sprite.scale.y = Math.sin(this.pulse_count);
+            this.sprite.scale.x = 1 + Math.sin(this.pulse_count) / 10;
+            this.sprite.scale.y = 1 + Math.sin(this.pulse_count) / 10;
         }
     }
 }
