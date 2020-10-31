@@ -27,20 +27,19 @@ export class Game {
         // reset game (or create a new one if doesn't exist)
         this.cmd_map.field = this.create_new_field;
 
-        this.cmd_map.turn = function(data) {
-            this.check_state(this.STATES.WAIT);
-            this.change_state(this.STATES.MOVE_FROM);
-            this.show_tooltip();
+        this.cmd_map.selecting = function(data) {
+            this.redraw_field(data);
+
+            let hex = this.grid.hexes[data.target.x][data.target.y];
+            hex.unit.start_pulse();
         };
 
-        this.cmd_map.moving = function(data) {
-            this.check_state(this.STATES.MOVE_TO, this.STATES.WAIT);
-            data.type = 'move';
+        this.cmd_map.deselecting = function(data) {
             this.redraw_field(data);
-            if (this.state === this.STATES.MOVE_TO) {
-                this.change_state(this.STATES.ATTACK);
+            let hex = this.grid.hexes[data.target.x][data.target.y];
+            if (hex.unit) {
+                hex.unit.stop_pulse();
             }
-            this.show_tooltip();
         };
 
         this.cmd_map.attacking = function(data) {
