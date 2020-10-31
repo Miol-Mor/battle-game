@@ -23,8 +23,16 @@ impl Grid {
     }
 
     // get hex with further change
-    pub fn get_hex(&mut self, x: u32, y: u32) -> Option<&mut Hex> {
+    pub fn get_hex_mut(&mut self, x: u32, y: u32) -> Option<&mut Hex> {
         self.hexes.iter_mut().find(|hex| hex.x == x && hex.y == y)
+    }
+
+    // get hex with further change
+    pub fn get_hex(&self, x: u32, y: u32) -> Option<Hex> {
+        match self.hexes.iter().find(|hex| hex.x == x && hex.y == y) {
+            None => None,
+            Some(hex) => Some(hex.clone()),
+        }
     }
 }
 
@@ -58,11 +66,11 @@ mod test {
     }
 
     #[test]
-    fn get_hex() {
+    fn get_hex_mut() {
         let mut grid = Grid::new(5, 5);
 
         // hex that exists
-        let hex = grid.get_hex(1, 2);
+        let hex = grid.get_hex_mut(1, 2);
 
         assert!(hex.is_some());
         let hex = hex.unwrap();
@@ -70,7 +78,7 @@ mod test {
         assert_eq!(hex.y, 2);
 
         // hex that does not exists
-        let hex = grid.get_hex(3, 8);
+        let hex = grid.get_hex_mut(3, 8);
         assert!(hex.is_none());
     }
 
