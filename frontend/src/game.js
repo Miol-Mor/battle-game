@@ -411,7 +411,7 @@ export class Game {
         for (let x = 0; x < this.grid.num_x; x++) {
             for (let y = 0; y < this.grid.num_y; y++) {
                 let hex = this.grid.hexes[x][y];
-                if (! hex.content && ! hex.unit) {
+                if (!hex.content && !hex.unit) {
                     return hex.coords;
                 }
             }
