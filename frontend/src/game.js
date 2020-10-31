@@ -369,9 +369,9 @@ export class Game {
     }
 
     // private
-    move_unit(from_y, from_x, to_y, to_x) {
-        let from_hex = this.grid.hexes[from_y][from_x];
-        let to_hex = this.grid.hexes[to_y][to_x];
+    move_unit(from_x, from_y, to_x, to_y) {
+        let from_hex = this.grid.hexes[from_x][from_y];
+        let to_hex = this.grid.hexes[to_x][to_y];
         let unit = from_hex.unit;
         if (from_hex.unit === null) {
             throw new Error(`No unit in the cell to move from: ${JSON.stringify(from_hex.coords)}`);
