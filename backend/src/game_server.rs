@@ -1,19 +1,25 @@
 use actix::{Actor, Addr, Context, Handler};
 
 use serde::Serialize;
-use tracing::instrument;
 
 use crate::communicator;
 use crate::websocket::Websocket;
 
-use crate::api;
+use crate::api::common::Point;
 use crate::api::inner;
-use crate::api::request::{Attack, Move};
-use crate::api::response::{Attacking, Moving};
+use crate::api::request;
+use crate::api::request::Click;
+use crate::api::response;
+use crate::api::response::{Attacking, Deselecting, Field, Moving, Selecting, State};
 use crate::game::Game;
 use crate::game_objects::hex_objects::content::Content;
 use crate::game_objects::hex_objects::wall::Wall;
 use crate::game_objects::unit::Unit;
+
+const STATE_WAIT: &str = "wait";
+const STATE_SELECT: &str = "select";
+const STATE_ACTION: &str = "action";
+const STATE_ATTACK: &str = "attack";
 
 #[derive(Debug)]
 pub struct GameServer {
@@ -32,49 +38,27 @@ impl Actor for GameServer {
     type Context = Context<Self>;
 }
 
-impl Handler<inner::Request<Move>> for GameServer {
+impl Handler<inner::Request<Click>> for GameServer {
     type Result = ();
 
-    fn handle(&mut self, message: inner::Request<Move>, _: &mut Self::Context) -> Self::Result {
-        debug!("Handle move");
+    fn handle(&mut self, message: inner::Request<Click>, _: &mut Self::Context) -> Self::Result {
+        debug!("Handle click");
         if !self.check_player_turn(&message.sender) {
-            debug!("Error: wrong player move");
+            debug!("Error: wrong player clicked");
             return;
         }
-        let message = message.payload;
-        match self.game.move_unit(message.from, message.to) {
-            Ok(path) => {
-                let message = Moving::new(path);
-                self.broadcast(&message);
-            }
-            Err(error) => {
-                error!("{:?}", error.wrap_err("move handle error"));
-                self.send_error(api::request::CMD_MOVE.to_string());
-            }
-        }
-    }
-}
+        let click = message.payload;
 
-impl Handler<inner::Request<Attack>> for GameServer {
-    type Result = ();
+        // https://github.com/rust-lang/rust/issues/59159#issuecomment-539997185
+        let hex = match &self.game.selected_hex {
+            None => return self.select_unit(click.target),
+            Some(hex) => hex,
+        };
 
-    fn handle(&mut self, message: inner::Request<Attack>, _: &mut Self::Context) -> Self::Result {
-        debug!("Handle attack");
-        if !self.check_player_turn(&message.sender) {
-            debug!("Error: wrong player attack");
-            return;
-        }
-        let message = message.payload;
-        match self.game.attack(message.from.clone(), message.to.clone()) {
-            Ok((hurt, die)) => {
-                let message = Attacking::new(message.from, message.to, hurt, die);
-                self.broadcast(&message);
-                self.next_turn();
-            }
-            Err(error) => {
-                error!("{:?}", error.wrap_err("attack handle error"));
-                self.send_error(api::request::CMD_ATTACK.to_string());
-            }
+        if hex.to_point() == click.target {
+            self.deselect_unit();
+        } else {
+            self.unit_action(hex.unit.clone(), hex.to_point(), click.target);
         }
     }
 }
@@ -114,9 +98,102 @@ impl GameServer {
         }
     }
 
+    fn unit_action(&mut self, selected_unit: Option<Unit>, from: Point, target: Point) {
+        match self.game.get_unit(target.x, target.y) {
+            Err(error) => {
+                error!("{:?}", error.wrap_err("unit action error"));
+                self.send_error(request::CMD_CLICK.to_string());
+            }
+            Ok(None) => {
+                self.move_unit(from, target);
+            }
+            Ok(Some(target_unit)) => {
+                match selected_unit {
+                    None => {
+                        error!("No unit found in hex {:?}", from);
+                        self.send_error(request::CMD_CLICK.to_string());
+                    }
+                    Some(selected_unit) => {
+                        if target_unit.player == selected_unit.player {
+                            // just select another unit
+                            self.select_unit(target);
+                        } else {
+                            // enemy unit: attack!
+                            self.attack_unit(from, target);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn select_unit(&mut self, target: Point) {
+        match self.game.select_unit(target) {
+            Ok(selection) => {
+                self.send_current_player(&Selecting::new(
+                    selection.target,
+                    &selection.highlight_hexes,
+                ));
+                self.send_current_player(&State::new(STATE_ACTION.to_string()));
+            }
+            Err(error) => {
+                error!("{:?}", error.wrap_err("select handle error"));
+                self.send_error(request::CMD_CLICK.to_string());
+            }
+        }
+    }
+
+    fn deselect_unit(&mut self) {
+        match &self.game.selected_hex {
+            None => {}
+            Some(hex) => {
+                self.send_current_player(Deselecting::new(hex.to_point()));
+                self.game.deselect_unit();
+                self.send_current_player(State::new(STATE_SELECT.to_string()));
+            }
+        }
+    }
+
+    fn move_unit(&mut self, from: Point, to: Point) {
+        match self.game.move_unit(from, to) {
+            Ok(path) => {
+                let message = Moving::new(path);
+                self.broadcast(&message);
+                match self.game.select_unit(to) {
+                    Ok(_) => {}
+                    Err(error) => {
+                        error!("{:?}", error.wrap_err("select after move"));
+                        self.send_error(request::CMD_CLICK.to_string());
+                    }
+                }
+                self.send_current_player(State::new(STATE_ATTACK.to_string()))
+            }
+            Err(error) => {
+                error!("{:?}", error.wrap_err("move handle error"));
+                self.send_error(request::CMD_CLICK.to_string());
+            }
+        }
+    }
+
+    fn attack_unit(&mut self, from: Point, to: Point) {
+        match self.game.attack(from, to) {
+            Ok((hurt, die)) => {
+                self.deselect_unit();
+                let message = Attacking::new(from, to, hurt, die);
+                self.broadcast(&message);
+                self.next_turn();
+            }
+            Err(error) => {
+                error!("{:?}", error.wrap_err("attack handle error"));
+                self.send_error(request::CMD_CLICK.to_string());
+            }
+        }
+    }
+
     pub fn next_turn(&mut self) {
+        self.send_current_player(State::new(STATE_WAIT.to_string()));
         self.change_player();
-        self.send_turn();
+        self.send_current_player(State::new(STATE_ACTION.to_string()));
         debug!("Game state: {:?}", self.game);
     }
 
@@ -141,6 +218,8 @@ impl GameServer {
 
     pub fn new_game(&mut self) {
         let mut game = Game::new(4, 3);
+        self.broadcast(&State::new(STATE_WAIT.to_string()));
+
         let unit0 = Unit {
             player: 0,
             hp: 10,
