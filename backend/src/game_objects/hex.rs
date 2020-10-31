@@ -1,5 +1,6 @@
 use super::hex_objects::content::Content;
 use super::unit::Unit;
+use crate::api::common::Point;
 use serde::Serialize;
 
 #[derive(Clone, Serialize, Debug)]
@@ -27,6 +28,13 @@ impl Hex {
 
     pub fn set_content(&mut self, content: Option<Content>) {
         self.content = content;
+    }
+
+    pub fn to_point(&self) -> Point {
+        Point {
+            x: self.x,
+            y: self.y,
+        }
     }
 }
 

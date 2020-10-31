@@ -217,7 +217,10 @@ impl GameServer {
     }
 
     pub fn new_game(&mut self) {
-        let mut game = Game::new(4, 3);
+        let num_x = 4;
+        let num_y = 3;
+
+        let mut game = Game::new(num_x, num_y);
         self.broadcast(&State::new(STATE_WAIT.to_string()));
 
         let unit0 = Unit {
@@ -252,8 +255,8 @@ impl GameServer {
             Err(error) => debug!("{:?}", error),
         }
 
-        self.broadcast(&game);
         self.send_turn();
+        self.broadcast(&Field::new(&game, num_x, num_y));
         self.game = game;
     }
 }

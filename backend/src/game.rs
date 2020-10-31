@@ -6,16 +6,13 @@ use crate::game_objects::unit::Unit;
 
 use eyre::{Result, WrapErr};
 use rand::Rng;
-use serde::Serialize;
 use thiserror::Error;
 use tracing::instrument;
 
-#[derive(Serialize, Debug)]
+#[derive(Debug, Clone)]
 pub struct Game {
-    cmd: String,
-    num_x: u32,
-    num_y: u32,
-    field: Grid,
+    pub field: Grid,
+    pub selected_hex: Option<Hex>,
 }
 
 #[derive(Error, Debug)]
@@ -31,10 +28,8 @@ impl Game {
     // Public api
     pub fn new(num_x: u32, num_y: u32) -> Game {
         Game {
-            cmd: String::from("field"),
-            num_x,
-            num_y,
             field: Grid::new(num_x, num_y),
+            selected_hex: None,
         }
     }
 
@@ -163,17 +158,6 @@ mod test {
         assert!(game.set_content(0, 1, Some(Content::Wall(wall))).is_ok());
 
         (game, unit, wall)
-    }
-
-    #[test]
-    fn new() {
-        let num_x = 8;
-        let num_y = 3;
-        let game = Game::new(num_x, num_y);
-
-        assert_eq!(game.num_x, num_x);
-        assert_eq!(game.num_y, num_y);
-        assert_eq!(game.cmd, String::from("field"));
     }
 
     #[test]

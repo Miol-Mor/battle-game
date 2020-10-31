@@ -1,7 +1,7 @@
 use super::hex::Hex;
 use serde::Serialize;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct Grid {
     pub hexes: Vec<Hex>,
 }
