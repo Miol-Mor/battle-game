@@ -24,6 +24,12 @@ pub enum GameError {
     NoUnit,
 }
 
+#[derive(Debug)]
+pub struct Selection {
+    pub target: Point,
+    pub highlight_hexes: Vec<Point>,
+}
+
 impl Game {
     // Public api
     pub fn new(num_x: u32, num_y: u32) -> Game {
@@ -31,6 +37,30 @@ impl Game {
             field: Grid::new(num_x, num_y),
             selected_hex: None,
         }
+    }
+
+    #[instrument(skip(self))]
+    // return target and vector of hexes to highlight
+    pub fn select_unit(&mut self, target: Point) -> Result<Selection> {
+        match self
+            .get_unit(target.x, target.y)
+            .wrap_err("failed to select unit; failed to get unit")?
+        {
+            Some(_) => {
+                self.selected_hex = self.get_hex(target.x, target.y);
+                Ok(Selection {
+                    target,
+                    highlight_hexes: vec![],
+                })
+            }
+            None => Err(GameError::NoUnit).wrap_err("failed to get unit on select")?,
+        }
+    }
+
+    #[instrument(skip(self))]
+    // return target and vector of hexes to highlight
+    pub fn deselect_unit(&mut self) {
+        self.selected_hex = None
     }
 
     #[instrument(skip(self))]

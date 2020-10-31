@@ -5,6 +5,8 @@ use crate::game::Game;
 use crate::game_objects::{grid::Grid, hex::Hex};
 
 const CMD_FIELD: &str = "field";
+const CMD_SELECT: &str = "selecting";
+const CMD_DESELECT: &str = "deselecting";
 const CMD_MOVE: &str = "moving";
 const CMD_ATTACK: &str = "attacking";
 const CMD_ERROR: &str = "error";
@@ -24,6 +26,38 @@ impl Field {
             num_x,
             num_y,
             field: game.field.clone(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct Selecting {
+    cmd: String,
+    target: Point,
+    highlight_hexes: Vec<Point>,
+}
+
+impl Selecting {
+    pub fn new(target: Point, highlight_hexes: &Vec<Point>) -> Selecting {
+        Selecting {
+            cmd: CMD_SELECT.to_string(),
+            target,
+            highlight_hexes: highlight_hexes.clone(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct Deselecting {
+    cmd: String,
+    target: Point,
+}
+
+impl Deselecting {
+    pub fn new(target: Point) -> Deselecting {
+        Deselecting {
+            cmd: CMD_DESELECT.to_string(),
+            target,
         }
     }
 }
