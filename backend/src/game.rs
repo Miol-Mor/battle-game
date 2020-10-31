@@ -67,7 +67,7 @@ impl Game {
             None => Err(GameError::NoUnit).wrap_err("failed to attack from")?,
         };
 
-        let to_hex = match self.get_hex(to.x, to.y) {
+        let to_hex = match self.get_hex_mut(to.x, to.y) {
             Some(hex) => hex,
             None => Err(GameError::NoHex).wrap_err("failed to attack to")?,
         };
@@ -97,7 +97,7 @@ impl Game {
     // TODO: remove pub after creating new games from presets
     #[instrument(skip(self))]
     pub fn set_unit(&mut self, x: u32, y: u32, unit: Option<Unit>) -> Result<()> {
-        match self.get_hex(x, y) {
+        match self.get_hex_mut(x, y) {
             Some(hex) => {
                 hex.set_unit(unit);
                 Ok(())
@@ -107,8 +107,8 @@ impl Game {
     }
 
     #[instrument(skip(self))]
-    fn get_unit(&mut self, x: u32, y: u32) -> Result<Option<Unit>> {
-        match self.get_hex(x, y) {
+    pub fn get_unit(&mut self, x: u32, y: u32) -> Result<Option<Unit>> {
+        match self.get_hex_mut(x, y) {
             Some(hex) => Ok(hex.get_unit()),
             None => Err(GameError::NoHex).wrap_err("failed to get unit")?,
         }
@@ -116,7 +116,12 @@ impl Game {
 
     // Hex stuff
     #[instrument(skip(self))]
-    fn get_hex(&mut self, x: u32, y: u32) -> Option<&mut Hex> {
+    fn get_hex_mut(&mut self, x: u32, y: u32) -> Option<&mut Hex> {
+        self.field.get_hex_mut(x, y)
+    }
+
+    #[instrument(skip(self))]
+    fn get_hex(&self, x: u32, y: u32) -> Option<Hex> {
         self.field.get_hex(x, y)
     }
 
@@ -124,7 +129,7 @@ impl Game {
     // TODO: remove pub after creating new games from presets
     #[instrument(skip(self))]
     pub fn set_content(&mut self, x: u32, y: u32, content: Option<Content>) -> Result<()> {
-        match self.get_hex(x, y) {
+        match self.get_hex_mut(x, y) {
             Some(hex) => {
                 hex.set_content(content);
                 Ok(())
@@ -174,17 +179,17 @@ mod test {
     }
 
     #[test]
-    fn get_hex() {
+    fn get_hex_mut() {
         let mut game = Game::new(2, 2);
 
-        let hex = game.get_hex(0, 1);
+        let hex = game.get_hex_mut(0, 1);
         assert!(hex.is_some());
 
         let hex = hex.unwrap();
         assert_eq!(hex.x, 0);
         assert_eq!(hex.y, 1);
 
-        let hex = game.get_hex(5, 6);
+        let hex = game.get_hex_mut(5, 6);
         assert!(hex.is_none());
     }
 
