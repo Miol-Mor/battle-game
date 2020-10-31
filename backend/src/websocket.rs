@@ -35,16 +35,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
 
             let message = api::common::Message::from_str(&text);
             match message.cmd.as_str() {
-                api::request::CMD_MOVE => {
-                    let message = api::request::Move::from_str(&text);
+                api::request::CMD_CLICK => {
+                    let message = api::request::Click::from_str(&text);
                     let inner_message = api::inner::Request::new(ctx.address(), message);
-
-                    self.server_addr.do_send(inner_message);
-                }
-                api::request::CMD_ATTACK => {
-                    let message = api::request::Attack::from_str(&text);
-                    let inner_message = api::inner::Request::new(ctx.address(), message);
-
                     self.server_addr.do_send(inner_message);
                 }
                 _ => {

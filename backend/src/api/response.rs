@@ -5,7 +5,6 @@ use crate::game_objects::hex::Hex;
 
 const CMD_MOVE: &str = "moving";
 const CMD_ATTACK: &str = "attacking";
-pub const CMD_TURN: &str = "turn";
 const CMD_ERROR: &str = "error";
 
 #[derive(Serialize)]

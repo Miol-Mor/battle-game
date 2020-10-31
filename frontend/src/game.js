@@ -166,6 +166,7 @@ export class Game {
     // private
     create_new_field(field_data) {
         // correct order of functions is important
+        console.log("creating new field");
         this.set_defaults();
         this.clear_app();
         this.create_grid(field_data);
@@ -184,9 +185,6 @@ export class Game {
         // my_num - number of player using this client
         this.my_num = 1;
 
-        // current player's move and attack
-        this.cur_move = {from: null, to: null};
-        this.cur_attack = null;
         this.cur_hex = null;
     }
 
@@ -334,49 +332,14 @@ export class Game {
         this.cur_hex = null;
     }
 
-
-    // Users click handlers
-    // private
-    move_from(coords) {
-        this.cur_move.from = coords;
-    }
-
-    // private
-    move_to(coords) {
-        this.cur_move.to = coords;
-    }
-
-    // private
-    attack(coords) {
-        this.cur_attack = coords;
-    }
-
-
-    // Send messages to server
-    // ideally send current players move to server
-    // but instead we will simulate server activity
-    // private
-    send_move() {
+    send_to_backend(target) {
         this.socket.send (
             JSON.stringify ({
-                "cmd": "move",
-                "from": this.cur_move.from,
-                "to": this.cur_move.to
+                "cmd": "click",
+                "target": target,
             })
         );
     }
-
-    // private
-    send_attack() {
-        this.socket.send (
-            JSON.stringify ({
-                "cmd": "attack",
-                "from": this.cur_move.to,
-                "to": this.cur_attack
-            })
-        );
-    }
-
 
     // Change field functions
     // private
