@@ -187,14 +187,14 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
 
         let result = game.get_unit(4, 5);
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
     }
 
@@ -206,7 +206,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
     }
 
@@ -229,7 +229,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
         assert!(game.get_unit(from.x, from.y).unwrap().is_some());
     }
@@ -243,7 +243,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
     }
     #[test]
@@ -256,7 +256,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoUnit) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
     }
     #[test]
@@ -335,7 +335,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoUnit) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
     }
     #[test]
@@ -348,7 +348,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoUnit) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
     }
     #[test]
@@ -361,7 +361,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
     }
     #[test]
@@ -374,7 +374,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
-            _ => assert!(false, "wrong error"),
+            _ => unreachable!("wrong error"),
         }
     }
 }
