@@ -6,12 +6,6 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new(cmd: &str) -> Message {
-        Message {
-            cmd: cmd.to_owned(),
-        }
-    }
-
     pub fn from_str(s: &str) -> Message {
         serde_json::from_str(s).unwrap()
     }
