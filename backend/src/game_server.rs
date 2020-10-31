@@ -243,11 +243,11 @@ impl GameServer {
             Err(error) => debug!("{:?}", error),
         }
 
-        match game.set_content(1, 1, Some(Content::Wall(wall.clone()))) {
+        match game.set_content(1, 1, Some(Content::Wall(wall))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
-        match game.set_content(2, 2, Some(Content::Wall(wall.clone()))) {
+        match game.set_content(2, 2, Some(Content::Wall(wall))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }

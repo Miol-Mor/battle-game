@@ -63,7 +63,7 @@ mod test {
             x: 1,
             y: 2,
             unit: Some(unit.clone()),
-            content: Some(content.clone()),
+            content: Some(content),
         };
         let hex_string = serde_json::to_string(&hex).unwrap();
         let unit_string = serde_json::to_string(&unit).unwrap();

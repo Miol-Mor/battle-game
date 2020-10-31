@@ -1,7 +1,7 @@
 use super::wall::Wall;
 use serde::Serialize;
 
-#[derive(Clone, Serialize, Debug)]
+#[derive(Clone, Serialize, Debug, Copy)]
 #[serde(tag = "type")]
 pub enum Content {
     #[serde(rename = "wall")]

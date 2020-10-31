@@ -160,9 +160,7 @@ mod test {
         let wall = Wall {};
         assert!(game.set_unit(0, 0, Some(unit.clone())).is_ok());
         assert!(game.set_unit(1, 1, Some(unit.clone())).is_ok());
-        assert!(game
-            .set_content(0, 1, Some(Content::Wall(wall.clone())))
-            .is_ok());
+        assert!(game.set_content(0, 1, Some(Content::Wall(wall))).is_ok());
 
         (game, unit, wall)
     }
@@ -201,7 +199,7 @@ mod test {
         assert!(game.get_unit(1, 0).unwrap().is_none());
         assert!(game.get_unit(0, 1).unwrap().is_none());
 
-        let result = game.set_unit(4, 5, Some(unit.clone()));
+        let result = game.set_unit(4, 5, Some(unit));
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
@@ -220,7 +218,7 @@ mod test {
     fn set_content() {
         let (mut game, _, wall) = test_game();
 
-        let result = game.set_content(4, 5, Some(Content::Wall(wall.clone())));
+        let result = game.set_content(4, 5, Some(Content::Wall(wall)));
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
@@ -233,7 +231,7 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 0, y: 1 };
-        assert!(game.move_unit(from.clone(), to.clone()).is_ok());
+        assert!(game.move_unit(from, to).is_ok());
         assert!(game.get_unit(from.x, from.y).unwrap().is_none());
         assert!(game.get_unit(to.x, to.y).unwrap().is_some());
     }
@@ -243,7 +241,7 @@ mod test {
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 5, y: 6 };
 
-        let result = game.move_unit(from.clone(), to.clone());
+        let result = game.move_unit(from, to);
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
@@ -291,7 +289,7 @@ mod test {
             .set_unit(from.x, from.y, Some(attacking_unit.clone()))
             .is_ok());
 
-        let result = game.attack(from.clone(), to.clone());
+        let result = game.attack(from, to);
 
         assert!(result.is_ok());
         let (hurt, die) = result.unwrap();
@@ -317,7 +315,7 @@ mod test {
         };
         assert!(game.set_unit(from.x, from.y, Some(attacking_unit)).is_ok());
 
-        let result = game.attack(from.clone(), to.clone());
+        let result = game.attack(from, to);
         assert!(result.is_ok());
         let (hurt, die) = result.unwrap();
         assert_eq!(hurt.len(), 0);
@@ -336,7 +334,7 @@ mod test {
         };
         assert!(game.set_unit(from.x, from.y, Some(attacking_unit)).is_ok());
 
-        let result = game.attack(from.clone(), to.clone());
+        let result = game.attack(from, to);
         assert!(result.is_ok());
         let (hurt, die) = result.unwrap();
         assert_eq!(hurt.len(), 0);
@@ -348,7 +346,7 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 1 };
         let to = Point { x: 1, y: 1 };
-        let result = game.attack(from.clone(), to.clone());
+        let result = game.attack(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
@@ -361,7 +359,7 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 0, y: 1 };
-        let result = game.attack(from.clone(), to.clone());
+        let result = game.attack(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
@@ -374,7 +372,7 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 10 };
         let to = Point { x: 1, y: 1 };
-        let result = game.attack(from.clone(), to.clone());
+        let result = game.attack(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
@@ -387,7 +385,7 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 0, y: 10 };
-        let result = game.attack(from.clone(), to.clone());
+        let result = game.attack(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
