@@ -25,11 +25,7 @@ export class Game {
         // set map of commands
         this.cmd_map = {};
         // reset game (or create a new one if doesn't exist)
-        this.cmd_map.field = function(data) {
-            this.create_new_field(data);
-            this.change_state(this.STATES.WAIT);
-            this.show_tooltip();
-        };
+        this.cmd_map.field = this.create_new_field;
 
         this.cmd_map.turn = function(data) {
             this.check_state(this.STATES.WAIT);
