@@ -206,13 +206,12 @@ impl GameServer {
         self.current_player %= 2;
     }
 
-    fn send_turn(&self) {
-        let msg = api::common::Message::new(api::response::CMD_TURN);
+    fn send_current_player<T: Serialize>(&self, msg: T) {
         communicator::broadcast(&msg, vec![self.clients[self.current_player].clone()]);
     }
 
     fn send_error(&self, error_message: String) {
-        let error = api::response::Error::new(error_message);
+        let error = response::Error::new(error_message);
         communicator::broadcast(&error, vec![self.clients[self.current_player].clone()]);
     }
 
@@ -255,8 +254,8 @@ impl GameServer {
             Err(error) => debug!("{:?}", error),
         }
 
-        self.send_turn();
         self.broadcast(&Field::new(&game, num_x, num_y));
+        self.send_current_player(&State::new(STATE_ACTION.to_string()));
         self.game = game;
     }
 }
