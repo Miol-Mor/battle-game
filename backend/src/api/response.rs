@@ -5,6 +5,7 @@ use crate::game::Game;
 use crate::game_objects::{grid::Grid, hex::Hex};
 
 const CMD_FIELD: &str = "field";
+const CMD_STATE: &str = "state";
 const CMD_SELECT: &str = "selecting";
 const CMD_DESELECT: &str = "deselecting";
 const CMD_MOVE: &str = "moving";
@@ -92,6 +93,21 @@ impl Attacking {
             from,
             to,
             changes: Changes { hurt, die },
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct State {
+    cmd: String,
+    state: String,
+}
+
+impl State {
+    pub fn new(state: String) -> State {
+        State {
+            cmd: CMD_STATE.to_string(),
+            state,
         }
     }
 }
