@@ -10,20 +10,22 @@ export class Game {
         // app - PIXI aplication, used for this game
         this.app = null;
 
-        // array of game states
         this.STATES = {
-            MOVE_FROM: 'move_from',
-            MOVE_TO: 'move_to',
+            SELECT: 'select',
+            ACTION: 'action',
             ATTACK: 'attack',
-            WAIT: 'wait',
-            END: 'end'
+            WAIT:   'wait',
         };
+
+        // current game state
+        this.state = null;
 
         // graphic constants
         this.BACKGROUND_COLOR = 0xd6b609;
 
         // set map of commands
         this.cmd_map = {};
+
         // reset game (or create a new one if doesn't exist)
         this.cmd_map.field = this.create_new_field;
 
@@ -42,27 +44,19 @@ export class Game {
             }
         };
 
-        this.cmd_map.attacking = function(data) {
-            this.check_state(this.STATES.ATTACK, this.STATES.WAIT);
-            data.type = 'attack';
-            this.redraw_field(data);
-            if (this.state === this.STATES.ATTACK) {
-                this.change_state(this.STATES.WAIT);
-                let hex = this.grid.hexes[this.cur_move.to.x][this.cur_move.to.y];
-                if (hex.unit) {
-                    hex.unit.stop_pulse();
-                }
-            }
-            this.show_tooltip();
+        this.cmd_map.moving = this.redraw_field;
+
+        this.cmd_map.attacking = this.redraw_field;
+
+        this.cmd_map.state = function(data) {
+            this.change_state(data.state);
         };
 
         this.cmd_map.error = function(data) {
             console.error(JSON.stringify(data));
         };
 
-        this.cmd_map['GFY! :D'] = function(data) {
-            alert('GFY! :D');
-        };
+        this.cmd_map['GFY! :D'] = () => {alert('GFY! :D');};
     }
 
     // (needed, because constructor cannot be async)
@@ -120,40 +114,18 @@ export class Game {
     process_message(event) {
         let data = JSON.parse(event.data);
         console.log(data);
-        // TODO: we need to wait here all previous actions done
         this.cmd_map[data.cmd].call(this, data);
+        this.show_tooltip();
     }
 
     // process users clicks
     // private
     process_click(event) {
         console.log('clicked', event.target.coords);
-        switch (this.state) {
-            case this.STATES.MOVE_FROM:
-                this.move_from(event.target.coords);
-                this.change_state('move_to');
 
-                let hex = this.grid.hexes[event.target.coords.x][event.target.coords.y];
-                if (hex.unit) {
-                    hex.unit.start_pulse();
-                }
-            break;
-
-            case this.STATES.MOVE_TO:
-                this.move_to(event.target.coords);
-                this.send_move();
-            break;
-
-            case this.STATES.ATTACK:
-                this.attack(event.target.coords);
-                this.send_attack();
-            break;
-
-            default:
-                console.log('default click');
-            break;
+        if (this.state != this.STATES.WAIT) {
+            this.send_to_backend(event.target.coords);
         }
-        this.show_tooltip();
     }
 
 
@@ -276,10 +248,10 @@ export class Game {
         switch (this.state) {
             case this.STATES.WAIT:
                 return 'Wait for opponents turn\n';
-            case this.STATES.MOVE_FROM:
+            case this.STATES.SELECT:
                 return 'Your turn: Select unit\n';
-            case this.STATES.MOVE_TO:
-                return 'Your turn: Move unit\n';
+            case this.STATES.ACTION:
+                return 'Your turn: Move unit or attack\n';
             case this.STATES.ATTACK:
                 return 'Your turn: Attack\n';
             default:
@@ -340,12 +312,17 @@ export class Game {
     // private
     redraw_field(data) {
         console.log('redraw field');
-        switch(data.type) {
-            case 'move':
+        switch(data.cmd) {
+            case 'selecting':
+                // TODO: highlight hexes from data.hexes
+                console.log('highlight: ', data.highlight_hexes);
+            break;
+
+            case 'moving':
                 this.move_unit(data.coords[0].x, data.coords[0].y, data.coords[1].x, data.coords[1].y);
             break;
 
-            case 'attack':
+            case 'attacking':
                 console.log('attack!!! charge!!!');
                 // animate attack
                 if (data.changes) {
