@@ -9,13 +9,15 @@ use crate::api::common::Point;
 use crate::api::inner;
 use crate::api::request;
 use crate::api::request::Click;
-use crate::api::response;
-use crate::api::response::{Attacking, Deselecting, Field, Moving, Selecting, State};
+use crate::api::response::{
+    Attacking, Deselecting, Die, Error, Field, Hurt, Moving, Selecting, State, Update,
+};
 use crate::game::Game;
 use crate::game_objects::hex_objects::content::Content;
 use crate::game_objects::hex_objects::wall::Wall;
 use crate::game_objects::unit::Unit;
 
+// TODO: make it better
 const STATE_WAIT: &str = "wait";
 const STATE_SELECT: &str = "select";
 const STATE_ACTION: &str = "action";
@@ -157,7 +159,15 @@ impl GameServer {
     fn move_unit(&mut self, from: Point, to: Point) {
         match self.game.move_unit(from, to) {
             Ok(path) => {
-                let message = Moving::new(path);
+                let hexes = match self.game.hexes_from_points(path) {
+                    Ok(hexes) => hexes,
+                    Err(err) => {
+                        error!("{:?}", err.wrap_err("hexes from point"));
+                        self.send_error(request::CMD_CLICK.to_string());
+                        return;
+                    }
+                };
+                let message = Moving::new(hexes);
                 self.broadcast(&message);
                 match self.game.select_unit(to) {
                     Ok(_) => {}
@@ -179,8 +189,9 @@ impl GameServer {
         match self.game.attack(from, to) {
             Ok((hurt, die)) => {
                 self.deselect_unit();
-                let message = Attacking::new(from, to, hurt, die);
-                self.broadcast(&message);
+                self.broadcast(Attacking::new(from, to));
+                self.broadcast(Hurt::new(hurt));
+                self.broadcast(Die::new(die));
                 self.next_turn();
             }
             Err(error) => {
@@ -191,14 +202,18 @@ impl GameServer {
     }
 
     pub fn next_turn(&mut self) {
+        let hexes_to_change = self.game.restore_movements(self.current_player as u32);
+        let message = Update::new(hexes_to_change);
+        debug!("Changes: {:?}", message);
+        self.broadcast(message);
         self.send_current_player(State::new(STATE_WAIT.to_string()));
         self.change_player();
         self.send_current_player(State::new(STATE_ACTION.to_string()));
         debug!("Game state: {:?}", self.game);
     }
 
-    pub fn broadcast<T: Serialize>(&self, msg: &T) {
-        communicator::broadcast(msg, self.clients.clone())
+    pub fn broadcast<T: Serialize>(&self, msg: T) {
+        communicator::broadcast(&msg, self.clients.clone())
     }
 
     fn change_player(&mut self) {
@@ -211,7 +226,7 @@ impl GameServer {
     }
 
     fn send_error(&self, error_message: String) {
-        let error = response::Error::new(error_message);
+        let error = Error::new(error_message);
         communicator::broadcast(&error, vec![self.clients[self.current_player].clone()]);
     }
 
@@ -220,42 +235,28 @@ impl GameServer {
         let num_y = 3;
 
         let mut game = Game::new(num_x, num_y);
-        self.broadcast(&State::new(STATE_WAIT.to_string()));
+        self.broadcast(State::new(STATE_WAIT.to_string()));
 
-        let unit0 = Unit {
-            player: 0,
-            hp: 10,
-            damage: [2, 5],
-            speed: 1,
-        };
-        let unit1 = Unit {
-            player: 1,
-            hp: 7,
-            damage: [4, 6],
-            speed: 2,
-        };
-        let wall = Wall {};
-
-        match game.set_unit(0, 0, Some(unit0)) {
+        match game.set_unit(0, 0, Some(Unit::new(0, 9, [2, 5], 1))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
-        match game.set_unit(3, 2, Some(unit1)) {
+        match game.set_unit(3, 2, Some(Unit::new(1, 7, [4, 6], 2))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
 
-        match game.set_content(1, 1, Some(Content::Wall(wall))) {
+        match game.set_content(1, 1, Some(Content::Wall(Wall {}))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
-        match game.set_content(2, 2, Some(Content::Wall(wall))) {
+        match game.set_content(2, 2, Some(Content::Wall(Wall {}))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
 
-        self.broadcast(&Field::new(&game, num_x, num_y));
-        self.send_current_player(&State::new(STATE_ACTION.to_string()));
+        self.broadcast(Field::new(&game, num_x, num_y));
+        self.send_current_player(State::new(STATE_ACTION.to_string()));
         self.game = game;
     }
 }

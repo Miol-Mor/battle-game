@@ -11,6 +11,9 @@ const CMD_DESELECT: &str = "deselecting";
 const CMD_MOVE: &str = "moving";
 const CMD_ATTACK: &str = "attacking";
 const CMD_ERROR: &str = "error";
+const CMD_HURT: &str = "hurt";
+const CMD_DIE: &str = "die";
+const CMD_UPDATE: &str = "update";
 
 #[derive(Serialize)]
 pub struct Field {
@@ -66,38 +69,36 @@ impl Deselecting {
 #[derive(Serialize)]
 pub struct Moving {
     cmd: String,
-    coords: Vec<Point>,
+    coords: Vec<Hex>,
 }
 
 impl Moving {
-    pub fn new(points: Vec<Point>) -> Moving {
+    pub fn new(hexes: Vec<Hex>) -> Moving {
         Moving {
             cmd: CMD_MOVE.to_string(),
-            coords: points,
+            coords: hexes,
         }
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Attacking {
     cmd: String,
     from: Point,
     to: Point,
-    changes: Changes,
 }
 
 impl Attacking {
-    pub fn new(from: Point, to: Point, hurt: Vec<Hex>, die: Vec<Hex>) -> Attacking {
+    pub fn new(from: Point, to: Point) -> Attacking {
         Attacking {
             cmd: CMD_ATTACK.to_string(),
             from,
             to,
-            changes: Changes { hurt, die },
         }
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct State {
     cmd: String,
     state: String,
@@ -128,7 +129,46 @@ impl Error {
 }
 
 #[derive(Serialize, Debug)]
-pub struct Changes {
-    hurt: Vec<Hex>,
-    die: Vec<Hex>,
+pub struct Hurt {
+    cmd: String,
+    hexes: Vec<Hex>,
+}
+
+impl Hurt {
+    pub fn new(hexes: Vec<Hex>) -> Hurt {
+        Hurt {
+            cmd: CMD_HURT.to_string(),
+            hexes,
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct Die {
+    cmd: String,
+    hexes: Vec<Hex>,
+}
+
+impl Die {
+    pub fn new(hexes: Vec<Hex>) -> Die {
+        Die {
+            cmd: CMD_DIE.to_string(),
+            hexes,
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct Update {
+    cmd: String,
+    hexes: Vec<Hex>,
+}
+
+impl Update {
+    pub fn new(hexes: Vec<Hex>) -> Update {
+        Update {
+            cmd: CMD_UPDATE.to_string(),
+            hexes,
+        }
+    }
 }

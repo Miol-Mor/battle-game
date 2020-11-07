@@ -23,6 +23,7 @@ export class Game {
         // graphic constants
         this.BACKGROUND_COLOR = 0xd6b609;
 
+        // TODO: make cmd_map map with auto-generated fields (process_CMD_NAME)
         // set map of commands
         this.cmd_map = {};
 
@@ -30,23 +31,26 @@ export class Game {
         this.cmd_map.field = this.create_new_field;
 
         this.cmd_map.selecting = function(data) {
-            this.redraw_field(data);
+            this.process_selecting(data);
 
             let hex = this.grid.hexes[data.target.x][data.target.y];
             hex.unit.start_pulse();
         };
 
         this.cmd_map.deselecting = function(data) {
-            this.redraw_field(data);
             let hex = this.grid.hexes[data.target.x][data.target.y];
             if (hex.unit) {
                 hex.unit.stop_pulse();
             }
         };
 
-        this.cmd_map.moving = this.redraw_field;
+        this.cmd_map.moving = this.process_moving;
+        this.cmd_map.attacking = this.process_attacking;
 
-        this.cmd_map.attacking = this.redraw_field;
+        this.cmd_map.hurt = this.process_hurt;
+        this.cmd_map.die = this.process_die;
+        this.cmd_map.update = this.process_update;
+
 
         this.cmd_map.state = function(data) {
             this.change_state(data.state);
@@ -115,6 +119,7 @@ export class Game {
         let data = JSON.parse(event.data);
         console.log(data);
         this.cmd_map[data.cmd].call(this, data);
+        // TODO: not necessarry to call it on each message
         this.show_tooltip();
     }
 
@@ -310,36 +315,47 @@ export class Game {
 
     // Change field functions
     // private
-    redraw_field(data) {
-        console.log('redraw field');
-        switch(data.cmd) {
-            case 'selecting':
-                // TODO: highlight hexes from data.hexes
-                console.log('highlight: ', data.highlight_hexes);
-            break;
-
-            case 'moving':
-                this.move_unit(data.coords[0].x, data.coords[0].y, data.coords[1].x, data.coords[1].y);
-            break;
-
-            case 'attacking':
-                console.log('attack!!! charge!!!');
-                // animate attack
-                if (data.changes) {
-                    if (data.changes.hurt) {
-                        data.changes.hurt.forEach(el => {
-                            this.change_hex(el);
-                        });
-                    }
-                    if (data.changes.die) {
-                        data.changes.die.forEach(el => {
-                            this.kill_unit(el);
-                        });
-                    }
-                }
-            break;
-        }
+    process_selecting(data) {
+        // TODO: highlight hexes from data.hexes
+        console.log('highlight: ', data.highlight_hexes);
     }
+
+    process_moving(data) {
+        this.move_unit(data.coords[0].x, data.coords[0].y, data.coords[1].x, data.coords[1].y);
+        data.coords.forEach(el => {
+            this.change_hex(el);
+        });
+    }
+
+    process_attacking(data) {
+        console.log('attack!!! charge!!!');
+        // animate attack
+    }
+
+    process_hurt(data) {
+        console.log('process_hurt');
+        data.hexes.forEach(hex => {
+            console.log('hex: ', hex);
+            this.change_hex(hex);
+        });
+    }
+
+    process_die(data) {
+        console.log('process_die');
+        data.hexes.forEach(hex => {
+            console.log('hex: ', hex);
+            this.kill_unit(hex);
+        });
+    }
+
+    process_update(data) {
+        console.log('process_update');
+        data.hexes.forEach(hex => {
+            console.log('hex: ', hex);
+            this.change_hex(hex);
+        });
+    }
+
 
     // private
     change_hex(hex_data) {
