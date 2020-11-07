@@ -60,12 +60,7 @@ mod test {
 
     #[test]
     fn serialize_with_unit_and_content_wall() {
-        let unit = Unit {
-            player: 1,
-            hp: 10,
-            damage: [2, 4],
-            speed: 4,
-        };
+        let unit = Unit::new(1, 10, [2, 4], 4);
         let content = Content::Wall(Wall {});
         let hex = Hex {
             x: 1,

@@ -22,6 +22,9 @@ pub enum GameError {
 
     #[error("no unit")]
     NoUnit,
+
+    #[error("no moves")]
+    NoMoves,
 }
 
 #[derive(Debug)]
@@ -65,12 +68,14 @@ impl Game {
 
     #[instrument(skip(self))]
     pub fn move_unit(&mut self, from: Point, to: Point) -> Result<Vec<Point>> {
-        match self
-            .get_unit(from.x, from.y)
-            .wrap_err("failed to move unit; failed to get unit")?
-        {
+        match self.get_unit(from.x, from.y).wrap_err("get unit")? {
             Some(unit) => {
-                self.set_unit(to.x, to.y, Some(unit))
+                if unit.movements == 0 {
+                    return Err(GameError::NoMoves).wrap_err("no moves left")?;
+                }
+                let mut unit_mut = unit;
+                unit_mut.change_movements(unit.speed);
+                self.set_unit(to.x, to.y, Some(unit_mut))
                     .wrap_err("failed to move unit; failed to set unit")?;
                 self.set_unit(from.x, from.y, None)
                     .wrap_err("failed to move unit; failed to unset unit")?;
@@ -127,7 +132,7 @@ impl Game {
                 hex.set_unit(unit);
                 Ok(())
             }
-            None => Err(GameError::NoHex).wrap_err("failed to set unit")?,
+            None => Err(GameError::NoHex).wrap_err("set unit")?,
         }
     }
 
@@ -135,8 +140,37 @@ impl Game {
     pub fn get_unit(&mut self, x: u32, y: u32) -> Result<Option<Unit>> {
         match self.get_hex_mut(x, y) {
             Some(hex) => Ok(hex.get_unit()),
-            None => Err(GameError::NoHex).wrap_err("failed to get unit")?,
+            None => Err(GameError::NoHex).wrap_err("get unit")?,
         }
+    }
+
+    #[instrument(skip(self))]
+    pub fn get_unit_mut(&mut self, x: u32, y: u32) -> Result<Option<&mut Unit>> {
+        match self.get_hex_mut(x, y) {
+            Some(hex) => Ok(hex.get_unit_mut()),
+            None => Err(GameError::NoHex).wrap_err("get unit")?,
+        }
+    }
+
+    fn get_unit_hexes_for_player_mut(&mut self, player: u32) -> Vec<&mut Hex> {
+        self.field
+            .hexes
+            .iter_mut()
+            .filter(|hex| hex.get_unit().is_some())
+            .filter(|hex| hex.get_unit().unwrap().player == player)
+            .collect()
+    }
+
+    pub fn restore_movements(&mut self, player: u32) -> Vec<Hex> {
+        let mut hexes = vec![];
+        for hex in self.get_unit_hexes_for_player_mut(player) {
+            let mut unit = hex.get_unit_mut().unwrap();
+            if unit.has_moved() {
+                unit.restore_movements();
+                hexes.push(hex.clone());
+            }
+        }
+        hexes
     }
 
     // Hex stuff
@@ -150,8 +184,24 @@ impl Game {
         self.field.get_hex(x, y)
     }
 
+    #[instrument(skip(self))]
+    pub fn hexes_from_points(&self, points: Vec<Point>) -> Result<Vec<Hex>> {
+        let mut result = Vec::with_capacity(points.len());
+
+        for point in points {
+            match self.get_hex(point.x, point.y) {
+                Some(hex) => result.push(hex),
+                None => Err(GameError::NoHex)
+                    .wrap_err_with(|| format!("no hex in point {:?}", point))?,
+            }
+        }
+
+        Ok(result)
+    }
+
     // Content stuff
     // TODO: remove pub after creating new games from presets
+    // Set content to the point (x, y)
     #[instrument(skip(self))]
     pub fn set_content(&mut self, x: u32, y: u32, content: Option<Content>) -> Result<()> {
         match self.get_hex_mut(x, y) {
@@ -159,7 +209,7 @@ impl Game {
                 hex.set_content(content);
                 Ok(())
             }
-            None => Err(GameError::NoHex).wrap_err("failed to set content")?,
+            None => Err(GameError::NoHex).wrap_err("set content")?,
         }
     }
 }
@@ -176,12 +226,7 @@ mod test {
     //   | U
     fn test_game() -> (Game, Unit, Wall) {
         let mut game = Game::new(2, 2);
-        let unit = Unit {
-            player: 1,
-            hp: 5,
-            damage: [5, 5],
-            speed: 3,
-        };
+        let unit = Unit::new(1, 5, [5, 5], 3);
         let wall = Wall {};
         assert!(game.set_unit(0, 0, Some(unit.clone())).is_ok());
         assert!(game.set_unit(1, 1, Some(unit.clone())).is_ok());

@@ -84,12 +84,7 @@ mod test {
 
     #[test]
     fn serialize() {
-        let unit = Unit {
-            player: 1,
-            hp: 1,
-            damage: [120, 130],
-            speed: 1,
-        };
+        let unit = Unit::new(1, 1, [120, 130], 1);
         let hex_one = Hex {
             x: 1,
             y: 1,
