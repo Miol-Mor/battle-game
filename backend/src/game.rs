@@ -115,6 +115,7 @@ impl Game {
         let mut die: Vec<Hex> = vec![];
         if to_unit.hp == 0 {
             die.push(to_hex.clone());
+            to_hex.set_unit(None);
         } else {
             hurt.push(to_hex.clone());
         }
