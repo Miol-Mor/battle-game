@@ -118,6 +118,7 @@ impl GameServer {
                     Some(selected_unit) => {
                         if target_unit.player == selected_unit.player {
                             // just select another unit
+                            self.deselect_unit();
                             self.select_unit(target);
                         } else {
                             // enemy unit: attack!
