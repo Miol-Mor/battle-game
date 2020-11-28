@@ -29,7 +29,7 @@ pub enum GameError {
 
 #[derive(Debug)]
 pub struct Selection {
-    pub target: Point,
+    pub target: Hex,
     pub highlight_hexes: Vec<Point>,
 }
 
@@ -43,7 +43,7 @@ impl Game {
     }
 
     #[instrument(skip(self))]
-    // return target and vector of hexes to highlight
+    // return target point and vector of points to highlight
     pub fn select_unit(&mut self, target: Point) -> Result<Selection> {
         match self
             .get_unit(target.x, target.y)
@@ -52,7 +52,7 @@ impl Game {
             Some(_) => {
                 self.selected_hex = self.get_hex(target.x, target.y);
                 Ok(Selection {
-                    target,
+                    target: self.selected_hex.clone().unwrap(),
                     highlight_hexes: vec![],
                 })
             }

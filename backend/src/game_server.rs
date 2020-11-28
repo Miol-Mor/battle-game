@@ -53,7 +53,10 @@ impl Handler<inner::Request<Click>> for GameServer {
 
         // https://github.com/rust-lang/rust/issues/59159#issuecomment-539997185
         let hex = match &self.game.selected_hex {
-            None => return self.select_unit(click.target),
+            None => {
+                self.select_unit(click.target);
+                return;
+            }
             Some(hex) => hex,
         };
 
@@ -133,8 +136,12 @@ impl GameServer {
     fn select_unit(&mut self, target: Point) {
         match self.game.select_unit(target) {
             Ok(selection) => {
+                if self.current_player as u32 != selection.target.get_unit().unwrap().player {
+                    self.game.selected_hex = None;
+                    return;
+                }
                 self.send_current_player(&Selecting::new(
-                    selection.target,
+                    selection.target.to_point(),
                     &selection.highlight_hexes,
                 ));
                 self.send_current_player(&State::new(STATE_ACTION.to_string()));
