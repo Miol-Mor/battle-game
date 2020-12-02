@@ -1,13 +1,18 @@
 import * as PIXI from 'pixi.js';
 
 class Hex extends PIXI.Graphics {
-    constructor(x, y, side, BORDER_WIDTH, BORDER_COLOR, FILL_COLOR, HIGHLIGHT_COLOR) {
+    constructor(x, y, side, border_width, border_color, default_color, mouseover_color, path_color, wall_color) {
         super();
-        this.coords = {x: x, y: y};
-        this.BORDER_WIDTH = BORDER_WIDTH;
-        this.BORDER_COLOR = BORDER_COLOR;
-        this.FILL_COLOR = FILL_COLOR;
-        this.HIGHLIGHT_COLOR = HIGHLIGHT_COLOR;
+        this.coords = { x: x, y: y };
+        this.BORDER_WIDTH = border_width;
+        this.BORDER_COLOR = border_color;
+        this.DEFAULT_COLOR = default_color;
+        this.MOUSEOVER_COLOR = mouseover_color;
+        this.PATH_COLOR = path_color;
+        this.WALL_COLOR = wall_color;
+
+        this.state_selected = false;
+        this.state_in_path = false;
 
         // array of points of hex to draw
         this.points = this.hex_points(side);
@@ -34,30 +39,21 @@ class Hex extends PIXI.Graphics {
     }
 
     fill() {
+        let color = this.DEFAULT_COLOR;
+
+        if (this.state_selected) {
+            color = this.MOUSEOVER_COLOR;
+        } else if (this.state_in_path) {
+            color = this.PATH_COLOR;
+        } else if (this.content) {
+            color = this.WALL_COLOR;
+        }
+
         this.clear();
         this.lineStyle(this.BORDER_WIDTH, this.BORDER_COLOR, 1);
-        this.beginFill(this.FILL_COLOR);
+        this.beginFill(color);
         this.drawPolygon(this.points);
         this.endFill();
-    }
-
-    highlight() {
-        this.clear();
-        this.lineStyle(this.BORDER_WIDTH, this.BORDER_COLOR, 1);
-        this.beginFill(this.HIGHLIGHT_COLOR);
-        this.drawPolygon(this.points);
-        this.endFill();
-    }
-
-    dim() {
-        this.clear();
-        if (this.content) {
-            this.fill();
-        }
-        else {
-            this.lineStyle(this.BORDER_WIDTH, this.BORDER_COLOR, 1);
-            this.drawPolygon(this.points);
-        }
     }
 
     set_content(content) {
@@ -106,10 +102,13 @@ export class Hex_grid {
         // hexes - matrix of hexes (call - hexes[y][x], where y - number of row, x - number of column)
         this.hexes = [];
         // graphic constants
-        this.BORDER_COLOR = 0x000000;
         this.BORDER_WIDTH = 1;
-        this.FILL_COLOR = 0x1020b0;
-        this.HIGHLIGHT_COLOR = 0x04A348;
+        // Colors
+        this.BORDER_COLOR = 0x000000; // black
+        this.DEFAULT_COLOR = 0xd6b609; // yellow
+        this.MOUSEOVER_COLOR = 0x04A348; // green
+        this.PATH_COLOR = 0x7b8485; // lite gray
+        this.WALL_COLOR = 0x073d44; // dark
     }
 
     // draw grid on the stage
@@ -123,7 +122,9 @@ export class Hex_grid {
             this.hexes[x] = [];
             for (let y = 0; y < this.num_y; y++) {
                 let cur_hex = new Hex(x, y, this.hex_size,
-                    this.BORDER_WIDTH, this.BORDER_COLOR, this.FILL_COLOR, this.HIGHLIGHT_COLOR);
+                    this.BORDER_WIDTH, this.BORDER_COLOR,
+                    this.DEFAULT_COLOR, this.MOUSEOVER_COLOR, this.PATH_COLOR, this.WALL_COLOR,
+                );
 
                 let y_offset = side;
                 let x_offset = side * Math.sqrt(3) / 2;
@@ -147,8 +148,19 @@ export class Hex_grid {
 
         cur_hex.clear();
         cur_hex.lineStyle(this.BORDER_WIDTH, this.BORDER_COLOR, 1);
-        cur_hex.beginFill(0xd6b609);
+        cur_hex.beginFill(this.DEFAULT_COLOR);
         cur_hex.drawPolygon(cur_hex.points);
         cur_hex.endFill();
+    }
+
+    reset_in_path() {
+        this.hexes.forEach(hexes => {
+            hexes.forEach(hex => {
+                if (hex.state_in_path) {
+                    hex.state_in_path = false;
+                    hex.fill();
+                }
+            });
+        });
     }
 }
