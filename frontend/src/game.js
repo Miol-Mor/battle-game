@@ -316,7 +316,11 @@ export class Game {
     // Change field functions
     // private
     process_selecting(data) {
-        // TODO: highlight hexes from data.hexes
+        data.highlight_hexes.forEach(hex => {
+            this.highlight_hex(hex);
+        });
+
+
         console.log('highlight: ', data.highlight_hexes);
     }
 
@@ -368,6 +372,11 @@ export class Game {
         if (hex_data.unit) {
             hex.change_unit(hex_data.unit);
         }
+    }
+
+    highlight_hex(hex_data) {
+        let hex = this.grid.hexes[hex_data.x][hex_data.y];
+        hex.highlight();
     }
 
 

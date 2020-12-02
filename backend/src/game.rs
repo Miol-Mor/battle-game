@@ -6,6 +6,7 @@ use crate::game_objects::unit::Unit;
 
 use eyre::{Result, WrapErr};
 use rand::Rng;
+use std::collections::HashMap;
 use thiserror::Error;
 use tracing::instrument;
 
@@ -53,7 +54,7 @@ impl Game {
                 self.selected_hex = self.get_hex(target.x, target.y);
                 Ok(Selection {
                     target: self.selected_hex.clone().unwrap(),
-                    highlight_hexes: vec![],
+                    highlight_hexes: self.available_points(&self.selected_hex),
                 })
             }
             None => Err(GameError::NoUnit).wrap_err("failed to get unit on select")?,
@@ -213,12 +214,87 @@ impl Game {
             None => Err(GameError::NoHex).wrap_err("set content")?,
         }
     }
+
+    // Return vector of points wich are reachable by unit in given hex
+    // If given hex is non vector is empty
+    // If there is no unit in hex, vector is empty
+    pub fn available_points(&self, from: &Option<Hex>) -> Vec<Point> {
+        let from_hex = match from {
+            Some(hex) => hex,
+            None => return vec![],
+        };
+
+        let unit = match from_hex.unit {
+            Some(unit) => unit,
+            None => return vec![],
+        };
+
+        let mut hexmap: HashMap<Point, u32> = HashMap::with_capacity(self.field.hexes.len());
+
+        self.find_path(from_hex, 0, unit.movements, &mut hexmap);
+
+        hexmap.into_keys().collect()
+    }
+
+    fn find_path(&self, hex: &Hex, value: u32, max_value: u32, hexmap: &mut HashMap<Point, u32>) {
+        if value > max_value {
+            return;
+        }
+        let hexmap_value = hexmap.get(&hex.to_point());
+        // We proceed if we were not in this hex
+        // or if we was here, but through longer path
+        if hexmap_value.is_none() || hexmap_value.unwrap() > &value {
+            if hex.get_unit().is_some() && value != 0 {
+                return;
+            }
+            if hex.get_content().is_some() {
+                return;
+            }
+
+            hexmap.insert(hex.to_point(), value);
+            for hex in self.find_neighbours(hex) {
+                self.find_path(&hex, value + 1, max_value, hexmap)
+            }
+        }
+    }
+
+    fn find_neighbours(&self, hex: &Hex) -> Vec<Hex> {
+        let mut hexes: Vec<Hex> = Vec::with_capacity(6);
+        let min_x: u32 = if hex.x == 0 { hex.x } else { hex.x - 1 };
+        let min_y: u32 = if hex.y == 0 { hex.y } else { hex.y - 1 };
+        for x in min_x..hex.x + 2 {
+            for y in min_y..hex.y + 2 {
+                if x == hex.x && y == hex.y {
+                    continue;
+                }
+                let new_hex = match self.get_hex(x, y) {
+                    Some(hex) => hex,
+                    None => continue,
+                };
+
+                // We iterate through nine hexes, but hex has only six neighbours
+                // For even and odd rows we need to drop different hexes,
+                // that are defined by this formulas
+                if hex.y % 2 == 0 {
+                    if x == hex.x.overflowing_sub(1).0 && y != hex.y {
+                        continue;
+                    }
+                } else if x == hex.x + 1 && y != hex.y {
+                    continue;
+                }
+
+                hexes.push(new_hex);
+            }
+        }
+
+        hexes
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use super::super::game_objects::hex_objects::wall::Wall;
     use super::*;
+    use crate::game_objects::hex_objects::wall::Wall;
 
     // Test game is a game with 2x2 field
     // There are 2 units (U) and 1 wall (W) on it
@@ -452,5 +528,218 @@ mod test {
             Some(GameError::NoHex) => {}
             _ => unreachable!("wrong error"),
         }
+    }
+
+    // For tests with pathfinding we need match larger field
+
+    // 0   | U |   |   |   |   |   |   |    0
+    // 1     | U |   |   |   |   |   |   |  1
+    // 2   |   |   |   |   | U |   | W |    2
+    // 3     |   |   |   |   |   |   |   |  3
+    // 4   |   |   |   |   |   |   |   |    4
+    // 5     |   | W |   |   |   |   |   |  5
+    // 6   |   |   |   |   |   |   |   |    6
+    // 7     |   |   |   |   | W | W |   |  7
+    // 8   |   |   |   |   | W | U | W |    8
+    // 9     |   | U |   |   | W | W | W |  9
+    // 10  |   |   |   |   |   |   | W |    10
+    // 11    |   |   |   |   |   | W |   |  11
+
+    fn test_big_game() -> Game {
+        let mut game = Game::new(8, 12);
+        let unit = Unit::new(1, 5, [5, 5], 3);
+        let wall = Wall {};
+        assert!(game.set_unit(0, 0, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(1, 1, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(4, 2, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(5, 8, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(2, 9, Some(unit.clone())).is_ok());
+        assert!(game.set_content(6, 2, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(2, 5, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(5, 7, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(6, 7, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(4, 8, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(6, 8, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(5, 9, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(6, 9, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(7, 9, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(6, 10, Some(Content::Wall(wall))).is_ok());
+        assert!(game.set_content(6, 11, Some(Content::Wall(wall))).is_ok());
+
+        game
+    }
+
+    #[test]
+    fn find_neighbours_in_the_middle() {
+        let game = test_big_game();
+        // hex with nothing nearby for odd y
+        let hex = game.get_hex(1, 9).unwrap();
+
+        let neighbours = game.find_neighbours(&hex);
+        // convert to points to simplify assertion
+        let neighbours: Vec<Point> = neighbours.iter().map(|hex| hex.to_point()).collect();
+        assert!(neighbours.len() == 6);
+        assert!(neighbours.contains(&Point { x: 0, y: 8 }));
+        assert!(neighbours.contains(&Point { x: 1, y: 8 }));
+        assert!(neighbours.contains(&Point { x: 0, y: 9 }));
+        assert!(neighbours.contains(&Point { x: 2, y: 9 }));
+        assert!(neighbours.contains(&Point { x: 0, y: 10 }));
+        assert!(neighbours.contains(&Point { x: 1, y: 10 }));
+
+        // hex with nothing nearby for even y
+        let hex = game.get_hex(1, 10).unwrap();
+
+        let neighbours = game.find_neighbours(&hex);
+        // convert to points to simplify assertion
+        let neighbours: Vec<Point> = neighbours.iter().map(|hex| hex.to_point()).collect();
+        assert!(neighbours.len() == 6);
+        assert!(neighbours.contains(&Point { x: 1, y: 9 }));
+        assert!(neighbours.contains(&Point { x: 2, y: 9 }));
+        assert!(neighbours.contains(&Point { x: 0, y: 10 }));
+        assert!(neighbours.contains(&Point { x: 2, y: 10 }));
+        assert!(neighbours.contains(&Point { x: 1, y: 11 }));
+        assert!(neighbours.contains(&Point { x: 2, y: 11 }));
+    }
+
+    #[test]
+    fn find_neighbours_on_boarder() {
+        let game = test_big_game();
+        // hex near boarder
+        let hex = game.get_hex(1, 0).unwrap();
+
+        let neighbours = game.find_neighbours(&hex);
+        // convert to points to simplify assertion
+        let neighbours: Vec<Point> = neighbours.iter().map(|hex| hex.to_point()).collect();
+        assert!(neighbours.len() == 4);
+        assert!(neighbours.contains(&Point { x: 0, y: 0 }));
+        assert!(neighbours.contains(&Point { x: 2, y: 0 }));
+        assert!(neighbours.contains(&Point { x: 1, y: 1 }));
+        assert!(neighbours.contains(&Point { x: 2, y: 1 }));
+    }
+
+    #[test]
+    fn find_neighbours_in_even_corner() {
+        let game = test_big_game();
+        let hex = game.get_hex(0, 0).unwrap();
+
+        let neighbours = game.find_neighbours(&hex);
+        // convert to points to simplify assertion
+        let neighbours: Vec<Point> = neighbours.iter().map(|hex| hex.to_point()).collect();
+        assert!(neighbours.len() == 3);
+        assert!(neighbours.contains(&Point { x: 1, y: 0 }));
+        assert!(neighbours.contains(&Point { x: 0, y: 1 }));
+        assert!(neighbours.contains(&Point { x: 1, y: 1 }));
+    }
+
+    #[test]
+    fn find_neighbours_in_odd_corner() {
+        let game = test_big_game();
+        let hex = game.get_hex(0, 11).unwrap();
+
+        let neighbours = game.find_neighbours(&hex);
+        // convert to points to simplify assertion
+        let neighbours: Vec<Point> = neighbours.iter().map(|hex| hex.to_point()).collect();
+        assert!(neighbours.len() == 2);
+        assert!(neighbours.contains(&Point { x: 0, y: 10 }));
+        assert!(neighbours.contains(&Point { x: 1, y: 11 }));
+    }
+
+    #[test]
+    fn available_points_no_hex() {
+        let game = test_big_game();
+
+        let points = game.available_points(&None);
+        assert!(points.is_empty());
+    }
+
+    #[test]
+    fn available_points_no_unit() {
+        let game = test_big_game();
+        let hex = game.get_hex(5, 5);
+
+        let points = game.available_points(&hex);
+        assert!(points.is_empty());
+    }
+
+    #[test]
+    fn available_points_for_unit_without_movements() {
+        let game = test_big_game();
+        let mut hex = game.get_hex(0, 0).unwrap();
+        let mut unit = hex.get_unit_mut().unwrap();
+        unit.change_movements(unit.speed);
+
+        let points = game.available_points(&Some(hex));
+        assert!(points.len() == 1);
+        assert!(points.contains(&hex.to_point()));
+    }
+
+    #[test]
+    fn available_points_for_unit_with_no_obstacle() {
+        let game = test_big_game();
+        let mut hex = game.get_hex(2, 9).unwrap();
+        let mut unit = hex.get_unit_mut().unwrap();
+        unit.change_movements(unit.speed - 1);
+
+        let points = game.available_points(&Some(hex));
+        assert!(points.len() == 7);
+        assert!(points.contains(&Point { x: 1, y: 8 }));
+        assert!(points.contains(&Point { x: 2, y: 8 }));
+        assert!(points.contains(&Point { x: 1, y: 9 }));
+        assert!(points.contains(&Point { x: 2, y: 9 }));
+        assert!(points.contains(&Point { x: 3, y: 9 }));
+        assert!(points.contains(&Point { x: 1, y: 10 }));
+        assert!(points.contains(&Point { x: 2, y: 10 }));
+    }
+
+    #[test]
+    fn available_points_for_unit_in_corner_with_other_unit_nearby() {
+        let game = test_big_game();
+        let hex = game.get_hex(0, 0);
+
+        let points = game.available_points(&hex);
+        assert!(points.len() == 12);
+        assert!(points.contains(&Point { x: 0, y: 0 }));
+        assert!(points.contains(&Point { x: 1, y: 0 }));
+        assert!(points.contains(&Point { x: 2, y: 0 }));
+        assert!(points.contains(&Point { x: 3, y: 0 }));
+        assert!(points.contains(&Point { x: 0, y: 1 }));
+        assert!(points.contains(&Point { x: 2, y: 1 }));
+        assert!(points.contains(&Point { x: 3, y: 1 }));
+        assert!(points.contains(&Point { x: 1, y: 2 }));
+        assert!(points.contains(&Point { x: 1, y: 2 }));
+        assert!(points.contains(&Point { x: 2, y: 2 }));
+        assert!(points.contains(&Point { x: 0, y: 3 }));
+        assert!(points.contains(&Point { x: 1, y: 3 }));
+    }
+
+    #[test]
+    fn available_points_unit_interacts_with_wall() {
+        let game = test_big_game();
+        let hex = game.get_hex(4, 2);
+
+        let points = game.available_points(&hex);
+        assert!(!points.contains(&Point { x: 7, y: 2 }));
+    }
+
+    #[test]
+    fn available_points_unit_surrendered() {
+        let game = test_big_game();
+        let hex = game.get_hex(5, 8);
+
+        let points = game.available_points(&hex);
+        assert!(points.len() == 1);
+        assert!(points.contains(&Point { x: 5, y: 8 }));
+    }
+
+    #[test]
+    fn available_points_unit_speed_greaer_then_field() {
+        let game = test_big_game();
+        let mut hex = game.get_hex(2, 9).unwrap();
+        let mut unit = hex.get_unit_mut().unwrap();
+        unit.movements = 1000;
+
+        let points = game.available_points(&Some(hex));
+
+        assert!(points.len() == 79);
     }
 }

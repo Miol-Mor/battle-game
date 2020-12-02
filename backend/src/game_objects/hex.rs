@@ -3,7 +3,7 @@ use super::unit::Unit;
 use crate::api::common::Point;
 use serde::Serialize;
 
-#[derive(Clone, Serialize, Debug)]
+#[derive(Clone, Serialize, Debug, Copy)]
 pub struct Hex {
     pub x: u32,
     pub y: u32,
@@ -24,6 +24,10 @@ impl Hex {
 
     pub fn set_unit(&mut self, unit: Option<Unit>) {
         self.unit = unit;
+    }
+
+    pub fn get_content(&self) -> Option<Content> {
+        self.content.clone()
     }
 
     pub fn set_content(&mut self, content: Option<Content>) {
