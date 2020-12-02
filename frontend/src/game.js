@@ -14,7 +14,7 @@ export class Game {
             SELECT: 'select',
             ACTION: 'action',
             ATTACK: 'attack',
-            WAIT:   'wait',
+            WAIT: 'wait',
         };
 
         // current game state
@@ -30,18 +30,15 @@ export class Game {
         // reset game (or create a new one if doesn't exist)
         this.cmd_map.field = this.create_new_field;
 
-        this.cmd_map.selecting = function(data) {
-            this.process_selecting(data);
+        this.cmd_map.selecting = this.process_selecting;
 
-            let hex = this.grid.hexes[data.target.x][data.target.y];
-            hex.unit.start_pulse();
-        };
-
-        this.cmd_map.deselecting = function(data) {
+        this.cmd_map.deselecting = function (data) {
             let hex = this.grid.hexes[data.target.x][data.target.y];
             if (hex.unit) {
                 hex.unit.stop_pulse();
             }
+
+            this.grid.reset_in_path();
         };
 
         this.cmd_map.moving = this.process_moving;
@@ -52,15 +49,15 @@ export class Game {
         this.cmd_map.update = this.process_update;
 
 
-        this.cmd_map.state = function(data) {
+        this.cmd_map.state = function (data) {
             this.change_state(data.state);
         };
 
-        this.cmd_map.error = function(data) {
+        this.cmd_map.error = function (data) {
             console.error(JSON.stringify(data));
         };
 
-        this.cmd_map['GFY! :D'] = () => {alert('GFY! :D');};
+        this.cmd_map['GFY! :D'] = () => { alert('GFY! :D'); };
     }
 
     // (needed, because constructor cannot be async)
@@ -75,13 +72,13 @@ export class Game {
     create_socket() {
         this.socket = new WebSocket("ws://127.0.0.1:8088/ws/");
 
-        this.socket.onopen = function(e) {
+        this.socket.onopen = function (e) {
             console.log("[open] Connection established");
         };
 
         this.socket.onmessage = this.process_message.bind(this);
 
-        this.socket.onclose = function(event) {
+        this.socket.onclose = function (event) {
             if (event.wasClean) {
                 console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
             } else {
@@ -91,7 +88,7 @@ export class Game {
             }
         };
 
-        this.socket.onerror = function(error) {
+        this.socket.onerror = function (error) {
             console.log(`[error] ${error.message}`);
         };
     }
@@ -101,7 +98,7 @@ export class Game {
     // check there is correct state
     // private
     check_state(...states) {
-        if (! states.includes(this.state)) {
+        if (!states.includes(this.state)) {
             throw new Error(`Incorrect game state: ${this.state}; ${states} expected`);
         }
     }
@@ -167,7 +164,7 @@ export class Game {
 
     // private
     create_stage() {
-        let app = new PIXI.Application ({
+        let app = new PIXI.Application({
             antialias: true,
             transparent: false,
             resolution: 1
@@ -190,7 +187,7 @@ export class Game {
         this.app.loader.add('blue unit', 'images/blue unit.png');
 
         return new Promise(resolve => {
-            this.app.loader.load(function() {
+            this.app.loader.load(function () {
                 resolve("images loaded");
             });
         });
@@ -280,9 +277,12 @@ export class Game {
 
     // private
     process_mouseover(event) {
-        this.cur_hex = event.currentTarget;
-        event.currentTarget.highlight();
-        this.show_tooltip(event.currentTarget);
+        let hex = event.currentTarget;
+        this.cur_hex = hex;
+        hex.state_selected = true;
+        hex.fill();
+
+        this.show_tooltip(hex);
     }
 
     // private
@@ -299,14 +299,17 @@ export class Game {
 
     // private
     process_mouseout(event) {
-        event.currentTarget.dim();
+        let hex = event.currentTarget;
+        hex.state_selected = false;
+        hex.fill();
+
         this.clear_info();
         this.cur_hex = null;
     }
 
     send_to_backend(target) {
-        this.socket.send (
-            JSON.stringify ({
+        this.socket.send(
+            JSON.stringify({
                 "cmd": "click",
                 "target": target,
             })
@@ -316,10 +319,14 @@ export class Game {
     // Change field functions
     // private
     process_selecting(data) {
-        data.highlight_hexes.forEach(hex => {
-            this.highlight_hex(hex);
-        });
+        this.grid.hexes[data.target.x][data.target.y].unit.start_pulse();
 
+        data.highlight_hexes.forEach(hex_data => {
+            let hex = this.grid.hexes[hex_data.x][hex_data.y];
+
+            hex.state_in_path = true;
+            hex.fill();
+        });
 
         console.log('highlight: ', data.highlight_hexes);
     }
@@ -329,6 +336,8 @@ export class Game {
         data.coords.forEach(el => {
             this.change_hex(el);
         });
+
+        this.grid.reset_in_path();
     }
 
     process_attacking(data) {
@@ -372,11 +381,6 @@ export class Game {
         if (hex_data.unit) {
             hex.change_unit(hex_data.unit);
         }
-    }
-
-    highlight_hex(hex_data) {
-        let hex = this.grid.hexes[hex_data.x][hex_data.y];
-        hex.highlight();
     }
 
 
