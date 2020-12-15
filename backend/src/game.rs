@@ -262,7 +262,6 @@ impl Game {
         let mut hexmap: HashMap<Point, u32> = HashMap::with_capacity(self.field.hexes.len());
 
         self.fill_path_hexmap(from_hex, 0, unit.movements, &mut hexmap);
-
         hexmap.into_keys().collect()
     }
 
