@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { Hex_grid } from './grid';
 import { Unit } from './unit';
-
+import { window_iterator, sleep } from './helpers';
 
 export class Game {
     constructor() {
@@ -95,14 +95,6 @@ export class Game {
 
 
     // States operations
-    // check there is correct state
-    // private
-    check_state(...states) {
-        if (!states.includes(this.state)) {
-            throw new Error(`Incorrect game state: ${this.state}; ${states} expected`);
-        }
-    }
-
     //private
     change_state(state) {
         this.state = state;
@@ -331,11 +323,11 @@ export class Game {
         console.log('highlight: ', data.highlight_hexes);
     }
 
-    process_moving(data) {
-        this.move_unit(data.coords[0].x, data.coords[0].y, data.coords[1].x, data.coords[1].y);
-        data.coords.forEach(el => {
-            this.change_hex(el);
-        });
+    async process_moving(data) {
+        for (let submove of window_iterator(data.coords, 2)) {
+            this.move_unit(submove[0].x, submove[0].y, submove[1].x, submove[1].y);
+            await sleep(300);
+        }
 
         this.grid.reset_in_path();
     }
@@ -402,12 +394,6 @@ export class Game {
         let from_hex = this.grid.hexes[from_x][from_y];
         let to_hex = this.grid.hexes[to_x][to_y];
         let unit = from_hex.unit;
-        if (from_hex.unit === null) {
-            throw new Error(`No unit in the cell to move from: ${JSON.stringify(from_hex.coords)}`);
-        }
-        if (to_hex.unit !== null) {
-            throw new Error(`Cell to move to is already occupied: ${JSON.stringify(to_hex.coords)}`);
-        }
 
         from_hex.unset_unit();
         to_hex.set_unit(unit);
