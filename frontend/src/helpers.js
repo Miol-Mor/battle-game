@@ -29,7 +29,7 @@ export function window_iterator(array, window_length) {
         next: function () {
             let iter_next = { value: null, done: true };
 
-            // First run:
+            // First run: 
             // * Filling saved with null (to shift it away later)
             // * Add all values from iter from 0 to window_length - 1
             // * Then goes as usual
