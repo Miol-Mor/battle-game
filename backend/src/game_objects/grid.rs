@@ -31,7 +31,7 @@ impl Grid {
     pub fn get_hex(&self, x: u32, y: u32) -> Option<Hex> {
         match self.hexes.iter().find(|hex| hex.x == x && hex.y == y) {
             None => None,
-            Some(hex) => Some(hex.clone()),
+            Some(hex) => Some(*hex),
         }
     }
 }
@@ -98,7 +98,7 @@ mod test {
             content: Some(Content::Wall(Wall {})),
         };
         let grid = Grid {
-            hexes: vec![hex_one.clone(), hex_two.clone()],
+            hexes: vec![hex_one, hex_two],
         };
         let grid_string = serde_json::to_string(&grid).unwrap();
         let hex_one_string = serde_json::to_string(&hex_one).unwrap();
