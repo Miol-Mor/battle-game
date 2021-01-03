@@ -210,7 +210,7 @@ impl Game {
             let unit = hex.get_unit_mut().unwrap();
             if unit.has_moved() {
                 unit.restore_movements();
-                hexes.push(hex.clone());
+                hexes.push(*hex);
             }
         }
         hexes
@@ -397,8 +397,8 @@ mod test {
         let mut game = Game::new(2, 2);
         let unit = Unit::new(1, 5, [5, 5], 3);
         let wall = Wall {};
-        assert!(game.set_unit(0, 0, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(1, 1, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(0, 0, Some(unit)).is_ok());
+        assert!(game.set_unit(1, 1, Some(unit)).is_ok());
         assert!(game.set_content(1, 0, Some(Content::Wall(wall))).is_ok());
 
         (game, unit, wall)
@@ -537,9 +537,7 @@ mod test {
             damage: [unit.hp - 1, unit.hp - 1],
             ..unit
         };
-        assert!(game
-            .set_unit(from.x, from.y, Some(attacking_unit.clone()))
-            .is_ok());
+        assert!(game.set_unit(from.x, from.y, Some(attacking_unit)).is_ok());
 
         let result = game.attack(from, to);
 
@@ -671,11 +669,11 @@ mod test {
         let mut game = Game::new(8, 12);
         let unit = Unit::new(1, 5, [5, 5], 3);
         let wall = Wall {};
-        assert!(game.set_unit(0, 0, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(1, 1, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(4, 2, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(5, 8, Some(unit.clone())).is_ok());
-        assert!(game.set_unit(2, 9, Some(unit.clone())).is_ok());
+        assert!(game.set_unit(0, 0, Some(unit)).is_ok());
+        assert!(game.set_unit(1, 1, Some(unit)).is_ok());
+        assert!(game.set_unit(4, 2, Some(unit)).is_ok());
+        assert!(game.set_unit(5, 8, Some(unit)).is_ok());
+        assert!(game.set_unit(2, 9, Some(unit)).is_ok());
         assert!(game.set_content(6, 2, Some(Content::Wall(wall))).is_ok());
         assert!(game.set_content(2, 5, Some(Content::Wall(wall))).is_ok());
         assert!(game.set_content(5, 7, Some(Content::Wall(wall))).is_ok());
@@ -1010,7 +1008,7 @@ mod test {
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::WrongHex) => {}
-            _ => unreachable!("not neighbour"),
+            _ => unreachable!("wrong error type"),
         }
     }
 }
