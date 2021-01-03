@@ -13,6 +13,16 @@ pub struct Hex {
     pub content: Option<Content>,
 }
 
+impl PartialEq for Hex {
+    fn eq(&self, other: &Hex) -> bool {
+        self.to_point() == other.to_point()
+    }
+
+    fn ne(&self, other: &Hex) -> bool {
+        !self.eq(other)
+    }
+}
+
 impl Hex {
     pub fn get_unit(&self) -> Option<Unit> {
         self.unit.clone()
