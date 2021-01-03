@@ -26,6 +26,9 @@ pub enum GameError {
 
     #[error("no moves")]
     NoMoves,
+
+    #[error("wrong hex")]
+    WrongHex,
 }
 
 #[derive(Debug)]
@@ -46,10 +49,7 @@ impl Game {
     #[instrument(skip(self))]
     // return target point and vector of points to highlight
     pub fn select_unit(&mut self, target: Point) -> Result<Selection> {
-        match self
-            .get_unit(target.x, target.y)
-            .wrap_err("failed to select unit; failed to get unit")?
-        {
+        match self.get_unit(target.x, target.y).wrap_err("select unit")? {
             Some(_) => {
                 self.selected_hex = self.get_hex(target.x, target.y);
                 Ok(Selection {
@@ -57,7 +57,7 @@ impl Game {
                     highlight_hexes: self.available_points(&self.selected_hex),
                 })
             }
-            None => Err(GameError::NoUnit).wrap_err("failed to get unit on select")?,
+            None => Err(GameError::NoUnit).wrap_err("select unit")?,
         }
     }
 
@@ -120,22 +120,33 @@ impl Game {
     pub fn attack(&mut self, from: Point, to: Point) -> Result<(Vec<Hex>, Vec<Hex>)> {
         let from_hex = match self.get_hex(from.x, from.y) {
             Some(hex) => hex,
-            None => Err(GameError::NoHex).wrap_err("failed to attack from")?,
+            None => Err(GameError::NoHex).wrap_err("attack from")?,
         };
 
         let from_unit = match from_hex.get_unit() {
             Some(unit) => unit,
-            None => Err(GameError::NoUnit).wrap_err("failed to attack from")?,
+            None => Err(GameError::NoUnit).wrap_err("attack from")?,
+        };
+
+        // Check if we can attack to target hex
+        // Due to borrow rules we have to get unmuted hex here
+        match self.get_hex(to.x, to.y) {
+            Some(to_hex) => {
+                if !self.find_neighbours(&from_hex.to_point()).contains(&to_hex) {
+                    Err(GameError::WrongHex).wrap_err("not neighbour")?;
+                }
+            }
+            None => Err(GameError::NoHex).wrap_err("attack to")?,
         };
 
         let to_hex = match self.get_hex_mut(to.x, to.y) {
             Some(hex) => hex,
-            None => Err(GameError::NoHex).wrap_err("failed to attack to")?,
+            None => Err(GameError::NoHex).wrap_err("attack to")?,
         };
 
         let to_unit = match to_hex.get_unit_mut() {
             Some(unit) => unit,
-            None => Err(GameError::NoUnit).wrap_err("failed to attack to")?,
+            None => Err(GameError::NoUnit).wrap_err("attack to")?,
         };
 
         let mut rng = rand::thread_rng();
@@ -145,10 +156,10 @@ impl Game {
         let mut hurt: Vec<Hex> = vec![];
         let mut die: Vec<Hex> = vec![];
         if to_unit.hp == 0 {
-            die.push(to_hex.clone());
+            die.push(*to_hex);
             to_hex.set_unit(None);
         } else {
-            hurt.push(to_hex.clone());
+            hurt.push(*to_hex);
         }
         Ok((hurt, die))
     }
@@ -646,12 +657,12 @@ mod test {
     // 0   | U |   |   |   |   |   |   |    0
     // 1     | U |   |   |   |   |   |   |  1
     // 2   |   |   |   |   | U |   | W |    2
-    // 3     | P |   |   |   |   |   |   |  3
-    // 4   | P | P |   | P |   |   |   |    4
-    // 5   P | P | W | P |   |   |   |   |  5
-    // 6   |   | P | P |   |   |   |   |    6
-    // 7     |   | P |   |   | W | W |   |  7
-    // 8   | P | P |   |   | W | U | W |    8
+    // 3     |   |   |   |   |   |   |   |  3
+    // 4   |   |   |   |   |   |   |   |    4
+    // 5     |   | W |   |   |   |   |   |  5
+    // 6   |   |   |   |   |   |   |   |    6
+    // 7     |   |   |   |   | W | W |   |  7
+    // 8   |   |   |   |   | W | U | W |    8
     // 9     |   | U |   |   | W | W | W |  9
     // 10  |   |   |   |   |   |   | W |    10
     // 11    |   |   |   |   |   | W |   |  11
@@ -987,5 +998,19 @@ mod test {
         let path = path.unwrap();
         assert_eq!(path.len(), 1);
         assert_eq!(path[0], start_point);
+    }
+
+    #[test]
+    fn attack_unit_far_away() {
+        let mut game = test_big_game();
+        let from = Point { x: 0, y: 0 };
+        let to = Point { x: 4, y: 2 };
+        let result = game.attack(from, to);
+
+        assert!(result.is_err());
+        match result.unwrap_err().downcast_ref::<GameError>() {
+            Some(GameError::WrongHex) => {}
+            _ => unreachable!("not neighbour"),
+        }
     }
 }

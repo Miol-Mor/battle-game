@@ -253,7 +253,7 @@ impl GameServer {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
-        match game.set_unit(3, 0, Some(Unit::new(1, 5, [0, 3], 1))) {
+        match game.set_unit(2, 0, Some(Unit::new(1, 5, [0, 3], 1))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
