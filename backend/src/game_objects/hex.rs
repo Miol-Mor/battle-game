@@ -17,15 +17,11 @@ impl PartialEq for Hex {
     fn eq(&self, other: &Hex) -> bool {
         self.to_point() == other.to_point()
     }
-
-    fn ne(&self, other: &Hex) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl Hex {
     pub fn get_unit(&self) -> Option<Unit> {
-        self.unit.clone()
+        self.unit
     }
 
     pub fn get_unit_mut(&mut self) -> Option<&mut Unit> {
@@ -37,7 +33,7 @@ impl Hex {
     }
 
     pub fn get_content(&self) -> Option<Content> {
-        self.content.clone()
+        self.content
     }
 
     pub fn set_content(&mut self, content: Option<Content>) {
@@ -79,7 +75,7 @@ mod test {
         let hex = Hex {
             x: 1,
             y: 2,
-            unit: Some(unit.clone()),
+            unit: Some(unit),
             content: Some(content),
         };
         let hex_string = serde_json::to_string(&hex).unwrap();

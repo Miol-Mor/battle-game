@@ -42,11 +42,11 @@ pub struct Selecting {
 }
 
 impl Selecting {
-    pub fn new(target: Point, highlight_hexes: &Vec<Point>) -> Selecting {
+    pub fn new(target: Point, highlight_hexes: &[Point]) -> Selecting {
         Selecting {
             cmd: CMD_SELECT.to_string(),
             target,
-            highlight_hexes: highlight_hexes.clone(),
+            highlight_hexes: highlight_hexes.to_vec(),
         }
     }
 }
