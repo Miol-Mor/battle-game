@@ -8,7 +8,7 @@ use crate::websocket::Websocket;
 use crate::api::common::Point;
 use crate::api::inner;
 use crate::api::request;
-use crate::api::request::Click;
+use crate::api::request::{Click, SkipTurn};
 use crate::api::response::{
     Attacking, Deselecting, Die, Error, Field, Hurt, Moving, Selecting, State, Update,
 };
@@ -65,6 +65,21 @@ impl Handler<inner::Request<Click>> for GameServer {
         } else {
             self.unit_action(hex.unit.clone(), hex.to_point(), click.target);
         }
+    }
+}
+
+impl Handler<inner::Request<SkipTurn>> for GameServer {
+    type Result = ();
+
+    fn handle(&mut self, message: inner::Request<SkipTurn>, _: &mut Self::Context) -> Self::Result {
+        debug!("Handle skip turn");
+
+        if !self.check_player_turn(&message.sender) {
+            debug!("Error: wrong player clicked");
+            return;
+        }
+
+        self.next_turn()
     }
 }
 
