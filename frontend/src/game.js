@@ -117,9 +117,14 @@ export class Game {
     process_click(event) {
         console.log('clicked', event.target.coords);
 
-        if (this.state != this.STATES.WAIT) {
-            this.send_to_backend(event.target.coords);
-        }
+        this.send_to_backend('click', event.target.coords);
+    }
+
+    // process skip turn action
+    process_skip_turn() {
+        console.log('skip turn');
+
+        this.send_to_backend('skip_turn');
     }
 
 
@@ -299,10 +304,10 @@ export class Game {
         this.cur_hex = null;
     }
 
-    send_to_backend(target) {
+    send_to_backend(cmd, target) {
         this.socket.send(
             JSON.stringify({
-                "cmd": "click",
+                "cmd": cmd,
                 "target": target,
             })
         );
