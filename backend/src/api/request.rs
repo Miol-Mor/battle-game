@@ -5,6 +5,7 @@ use super::common::Point;
 use crate::api::response::Error;
 
 pub const CMD_CLICK: &str = "click";
+pub const CMD_SKIP_TURN: &str = "skip_turn";
 
 #[derive(Serialize, Deserialize, Debug, Message)]
 #[rtype(result = "Option<Error>")]
@@ -17,3 +18,7 @@ impl Click {
         serde_json::from_str(s).unwrap()
     }
 }
+
+#[derive(Debug, Message)]
+#[rtype(result = "Option<Error>")]
+pub struct SkipTurn;
