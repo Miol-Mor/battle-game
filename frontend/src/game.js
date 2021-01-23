@@ -138,6 +138,7 @@ export class Game {
         this.create_grid(field_data);
         this.set_units_start_pos(field_data);
         this.create_info();
+        this.create_skip_button();
         this.set_hex_click_handlers();
     }
 
@@ -182,6 +183,7 @@ export class Game {
     load_images() {
         this.app.loader.add('red unit', 'images/red unit.png');
         this.app.loader.add('blue unit', 'images/blue unit.png');
+        this.app.loader.add('skip button', 'images/skip button.png');
 
         return new Promise(resolve => {
             this.app.loader.load(function () {
@@ -228,6 +230,17 @@ export class Game {
         this.clear_info();
     }
 
+    create_skip_button() {
+        this.skip_button = new PIXI.Sprite(this.app.loader.resources["skip button"].texture);
+        this.skip_button.buttonMode = true;
+        this.skip_button.anchor.set(0);
+        this.skip_button.position.x = 0;
+        this.skip_button.position.y = 320;
+        this.skip_button.interactive = true;
+
+        this.app.stage.addChild(this.skip_button);
+    }
+
     // private
     clear_info() {
         this.info.text = this.turn_info();
@@ -270,6 +283,8 @@ export class Game {
                 hex.on('mouseout', this.process_mouseout.bind(this));
             }
         }
+
+        this.skip_button.on('click', this.process_skip_turn.bind(this));
     }
 
     // private
