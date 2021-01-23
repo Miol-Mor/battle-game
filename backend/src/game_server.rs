@@ -229,6 +229,9 @@ impl GameServer {
         let message = Update::new(hexes_to_change);
         debug!("Changes: {:?}", message);
         self.broadcast(message);
+
+        self.deselect_unit();
+
         self.send_current_player(State::new(STATE_WAIT.to_string()));
         self.change_player();
         self.send_current_player(State::new(STATE_ACTION.to_string()));
