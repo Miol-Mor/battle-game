@@ -248,6 +248,7 @@ impl GameServer {
     }
 
     fn send_current_player<T: Serialize>(&self, msg: T) {
+        // TODO: here and below is potention bug due to self.clients can not have index of self.current_player
         communicator::broadcast(&msg, vec![self.clients[self.current_player].clone()]);
     }
 
@@ -292,5 +293,45 @@ impl GameServer {
         self.broadcast(Field::new(&game, num_x, num_y));
         self.send_current_player(State::new(STATE_ACTION.to_string()));
         self.game = game;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::websocket::Websocket;
+    use actix::dev::channel;
+
+    fn test_server() -> GameServer {
+        // Addres for player 0
+        let channel: (
+            channel::AddressSender<Websocket>,
+            channel::AddressReceiver<Websocket>,
+        ) = channel::channel(1024);
+        let addr0 = Addr::new(channel.0);
+
+        // Address for player 1
+        let channel: (
+            channel::AddressSender<Websocket>,
+            channel::AddressReceiver<Websocket>,
+        ) = channel::channel(1024);
+        let addr1 = Addr::new(channel.0);
+
+        let mut server = GameServer::new();
+
+        server.clients.push(addr0);
+        server.clients.push(addr1);
+
+        server
+    }
+
+    #[test]
+    fn next_turn() {
+        let mut server = test_server();
+
+        assert_eq!(server.current_player, 0);
+        server.next_turn();
+
+        assert_eq!(server.current_player, 1);
     }
 }
