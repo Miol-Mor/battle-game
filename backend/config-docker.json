@@ -1,0 +1,1 @@
+{"address":"0.0.0.0:8088","auth_salt":"hashing_salt_change_me","jwt_expiration":48,"jwt_key":"secret_key_change_me"}
