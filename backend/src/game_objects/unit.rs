@@ -39,6 +39,10 @@ impl Unit {
     pub fn has_moved(self) -> bool {
         self.movements != self.speed
     }
+
+    pub fn is_my(self, player: u32) -> bool {
+        self.player == player
+    }
 }
 
 #[cfg(test)]
