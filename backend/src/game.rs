@@ -37,12 +37,46 @@ pub struct Selection {
     pub highlight_hexes: Vec<Point>,
 }
 
+pub enum Action {
+    Select,   // Add to selected hex
+    Deselect, // Remove from selected hex
+    Move,     // Move unit
+    Attack,   // Attack unit
+}
+
 impl Game {
     // Public api
     pub fn new(num_x: u32, num_y: u32) -> Game {
         Game {
             field: Grid::new(num_x, num_y),
             selected_hex: None,
+        }
+    }
+
+    // based on the state of the game and the position of the click, returns the action that should be performed
+    pub fn action(&mut self, target: Point, player: u32) -> Result<Action> {
+        // if there is no selected hex, it is select action
+        let selected_hex = match self.selected_hex {
+            Some(selected_hex) => selected_hex,
+            None => return Ok(Action::Select),
+        };
+
+        // if target point matches with selected, it's deselection action
+        if selected_hex.to_point() == target {
+            return Ok(Action::Deselect);
+        };
+
+        // if there is not unit ander target point, it's move action
+        let unit = match self.get_unit(target.x, target.y).wrap_err("action")? {
+            Some(unit) => unit,
+            None => return Ok(Action::Move),
+        };
+
+        // if there is player's unit under target point, select that unit, otherwise attack
+        if unit.is_my(player as u32) {
+            Ok(Action::Select)
+        } else {
+            Ok(Action::Attack)
         }
     }
 
@@ -68,12 +102,17 @@ impl Game {
     }
 
     #[instrument(skip(self))]
-    pub fn move_unit(&mut self, from: Point, to: Point) -> Result<Vec<Point>> {
-        let from_hex = match self.get_hex(from.x, from.y) {
+    pub fn move_unit(&mut self, to: Point) -> Result<Vec<Point>> {
+        let from = match self.selected_hex {
             Some(hex) => hex,
             None => Err(GameError::NoHex).wrap_err("no hex to move unit from")?,
         };
 
+        self.move_unit_internal(from, to)
+    }
+
+    #[instrument(skip(self))]
+    fn move_unit_internal(&mut self, from_hex: Hex, to: Point) -> Result<Vec<Point>> {
         let unit = match from_hex.get_unit() {
             Some(unit) => unit,
             None => Err(GameError::NoUnit).wrap_err("no unit on move")?,
@@ -87,13 +126,13 @@ impl Game {
 
         self.fill_path_hexmap(&from_hex, 0, unit.movements, &mut hexmap);
 
-        let path = match self.restore_path_from_hexmap(from, to, &hexmap) {
+        let path = match self.restore_path_from_hexmap(from_hex.to_point(), to, &hexmap) {
             Ok(path) => path,
             Err(e) => return Err(e.wrap_err("restore path")),
         };
 
         // TODO: try to remove double get_hex(from.x, from.y)
-        let from_hex = match self.get_hex_mut(from.x, from.y) {
+        let from_hex = match self.get_hex_mut(from_hex.to_point().x, from_hex.to_point().y) {
             Some(hex) => hex,
             None => Err(GameError::NoHex).wrap_err("hex from disappeared after pathfinding")?,
         };
@@ -117,12 +156,17 @@ impl Game {
     }
 
     #[instrument(skip(self))]
-    pub fn attack(&mut self, from: Point, to: Point) -> Result<(Vec<Hex>, Vec<Hex>)> {
-        let from_hex = match self.get_hex(from.x, from.y) {
+    pub fn attack(&mut self, to: Point) -> Result<(Vec<Hex>, Vec<Hex>)> {
+        let from_hex = match self.selected_hex {
             Some(hex) => hex,
             None => Err(GameError::NoHex).wrap_err("attack from")?,
         };
 
+        self.attack_internal(from_hex, to)
+    }
+
+    #[instrument(skip(self))]
+    fn attack_internal(&mut self, from_hex: Hex, to: Point) -> Result<(Vec<Hex>, Vec<Hex>)> {
         let from_unit = match from_hex.get_unit() {
             Some(unit) => unit,
             None => Err(GameError::NoUnit).wrap_err("attack from")?,
@@ -459,7 +503,8 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 0, y: 1 };
-        assert!(game.move_unit(from, to).is_ok());
+        let from = game.get_hex(from.x, from.y).unwrap();
+        assert!(game.move_unit_internal(from, to).is_ok());
         assert!(game.get_unit(from.x, from.y).unwrap().is_none());
         assert!(game.get_unit(to.x, to.y).unwrap().is_some());
     }
@@ -469,7 +514,8 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 1, y: 1 };
-        assert!(game.move_unit(from, to).is_err());
+        let from = game.get_hex(from.x, from.y).unwrap();
+        assert!(game.move_unit_internal(from, to).is_err());
         assert!(game.get_unit(from.x, from.y).unwrap().is_some());
         assert!(game.get_unit(to.x, to.y).unwrap().is_some());
     }
@@ -479,7 +525,8 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 1, y: 0 };
-        assert!(game.move_unit(from, to).is_err());
+        let from = game.get_hex(from.x, from.y).unwrap();
+        assert!(game.move_unit_internal(from, to).is_err());
         assert!(game.get_unit(from.x, from.y).unwrap().is_some());
         assert!(game.get_hex(to.x, to.y).unwrap().get_content().is_some());
     }
@@ -490,7 +537,8 @@ mod test {
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 5, y: 6 };
 
-        let result = game.move_unit(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.move_unit_internal(from, to);
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoHex) => {}
@@ -505,10 +553,16 @@ mod test {
         let from = Point { x: 5, y: 5 };
         let to = Point { x: 5, y: 6 };
 
-        let result = game.move_unit(from, to);
+        let from = Hex {
+            x: from.x,
+            y: from.y,
+            unit: None,
+            content: None,
+        };
+        let result = game.move_unit_internal(from, to);
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
-            Some(GameError::NoHex) => {}
+            Some(GameError::NoUnit) => {}
             _ => unreachable!("wrong error"),
         }
     }
@@ -519,7 +573,8 @@ mod test {
         let from = Point { x: 1, y: 0 };
         let to = Point { x: 0, y: 1 };
 
-        let result = game.move_unit(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.move_unit_internal(from, to);
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
             Some(GameError::NoUnit) => {}
@@ -539,7 +594,8 @@ mod test {
         };
         assert!(game.set_unit(from.x, from.y, Some(attacking_unit)).is_ok());
 
-        let result = game.attack(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.attack_internal(from, to);
 
         assert!(result.is_ok());
         let (hurt, die) = result.unwrap();
@@ -566,7 +622,8 @@ mod test {
         };
         assert!(game.set_unit(from.x, from.y, Some(attacking_unit)).is_ok());
 
-        let result = game.attack(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.attack_internal(from, to);
         assert!(result.is_ok());
         let (hurt, die) = result.unwrap();
         assert_eq!(hurt.len(), 0);
@@ -586,7 +643,8 @@ mod test {
         };
         assert!(game.set_unit(from.x, from.y, Some(attacking_unit)).is_ok());
 
-        let result = game.attack(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.attack_internal(from, to);
         assert!(result.is_ok());
         let (hurt, die) = result.unwrap();
         assert_eq!(hurt.len(), 0);
@@ -599,7 +657,8 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 1 };
         let to = Point { x: 1, y: 1 };
-        let result = game.attack(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.attack_internal(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
@@ -613,7 +672,8 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 0, y: 1 };
-        let result = game.attack(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.attack_internal(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
@@ -627,11 +687,17 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 10 };
         let to = Point { x: 1, y: 1 };
-        let result = game.attack(from, to);
+        let from = Hex {
+            x: from.x,
+            y: from.y,
+            unit: None,
+            content: None,
+        };
+        let result = game.attack_internal(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
-            Some(GameError::NoHex) => {}
+            Some(GameError::NoUnit) => {}
             _ => unreachable!("wrong error"),
         }
     }
@@ -641,7 +707,8 @@ mod test {
         let (mut game, _, _) = test_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 0, y: 10 };
-        let result = game.attack(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.attack_internal(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
@@ -1003,7 +1070,8 @@ mod test {
         let mut game = test_big_game();
         let from = Point { x: 0, y: 0 };
         let to = Point { x: 4, y: 2 };
-        let result = game.attack(from, to);
+        let from = game.get_hex(from.x, from.y).unwrap();
+        let result = game.attack_internal(from, to);
 
         assert!(result.is_err());
         match result.unwrap_err().downcast_ref::<GameError>() {
