@@ -37,6 +37,8 @@ pub struct Selection {
     pub highlight_hexes: Vec<Point>,
 }
 
+// Actions that user want to take now
+#[derive(Debug, Copy, Clone)]
 pub enum Action {
     Select,   // Add to selected hex
     Deselect, // Remove from selected hex
