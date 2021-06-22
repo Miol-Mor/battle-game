@@ -258,25 +258,25 @@ impl GameServer {
     }
 
     pub fn new_game(&mut self) {
-        let num_x = 4;
-        let num_y = 3;
+        let num_x = 12;
+        let num_y = 12;
 
         let mut game = Game::new(num_x, num_y);
         self.broadcast(State::new(STATE_WAIT.to_string()));
 
-        match game.set_unit(0, 0, Some(Unit::new(0, 9, [2, 5], 1))) {
+        match game.set_unit(0, 0, Some(Unit::new(0, 9, [2, 5], 8))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
-        match game.set_unit(0, 2, Some(Unit::new(0, 3, [1, 2], 2))) {
+        match game.set_unit(0, 2, Some(Unit::new(0, 3, [1, 2], 12))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
-        match game.set_unit(2, 0, Some(Unit::new(1, 5, [0, 3], 1))) {
+        match game.set_unit(2, 0, Some(Unit::new(1, 5, [0, 3], 7))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
-        match game.set_unit(3, 2, Some(Unit::new(1, 7, [4, 6], 2))) {
+        match game.set_unit(3, 2, Some(Unit::new(1, 7, [4, 6], 5))) {
             Ok(_) => {}
             Err(error) => debug!("{:?}", error),
         }
@@ -303,7 +303,7 @@ mod test {
     use actix::dev::channel;
 
     fn test_server() -> GameServer {
-        // Addres for player 0
+        // Address for player 0
         let channel: (
             channel::AddressSender<Websocket>,
             channel::AddressReceiver<Websocket>,
