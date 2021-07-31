@@ -68,7 +68,7 @@ impl Game {
             return Ok(Action::Deselect);
         };
 
-        // if there is not unit ander target point, it's move action
+        // if there is not unit under target point, it's move action
         let unit = match self.get_unit(target.x, target.y).wrap_err("action")? {
             Some(unit) => unit,
             None => return Ok(Action::Move),
