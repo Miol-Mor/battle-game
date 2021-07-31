@@ -19,6 +19,8 @@ export class Game {
 
         // current game state
         this.state = null;
+        // needed for block players action during moving animation
+        this.players_action_enabled = false;
 
         // graphic constants
         this.BACKGROUND_COLOR = 0xd6b609;
@@ -95,9 +97,18 @@ export class Game {
 
 
     // States operations
-    //private
+    // private
     change_state(state) {
         this.state = state;
+        switch (state) {
+            case this.STATES.ACTION:
+                this.players_action_enabled = true;
+            break;
+            case this.STATES.WAIT:
+                this.players_action_enabled = false;
+            break;
+        }
+        // console.log('players_action_enabled', this.players_action_enabled);
     }
 
 
@@ -116,14 +127,12 @@ export class Game {
     // private
     process_click(event) {
         console.log('clicked', event.target.coords);
-
         this.send_to_backend('click', event.target.coords);
     }
 
     // process skip turn action
     process_skip_turn() {
         console.log('skip turn');
-
         this.send_to_backend('skip_turn');
     }
 
@@ -194,7 +203,7 @@ export class Game {
 
     // private
     create_grid(field_data) {
-        let grid = new Hex_grid(this.app.stage, field_data.num_x, field_data.num_y, 50, 100, 100);
+        let grid = new Hex_grid(this.app.stage, field_data.num_x, field_data.num_y, 20, 100, 100);
         grid.draw();
 
         let hexes = field_data.field.hexes;
@@ -320,12 +329,17 @@ export class Game {
     }
 
     send_to_backend(cmd, target) {
-        this.socket.send(
-            JSON.stringify({
-                "cmd": cmd,
-                "target": target,
-            })
-        );
+        if (this.players_action_enabled) {
+            this.socket.send(
+                JSON.stringify({
+                    "cmd": cmd,
+                    "target": target,
+                })
+            );
+        }
+        else {
+            console.log('Not your turn. Be patient');
+        }
     }
 
     // Change field functions
@@ -344,12 +358,14 @@ export class Game {
     }
 
     async process_moving(data) {
+        this.players_action_enabled = false;
         for (let submove of window_iterator(data.coords, 2)) {
             this.move_unit(submove[0].x, submove[0].y, submove[1].x, submove[1].y);
             await sleep(300);
         }
 
         this.grid.reset_in_path();
+        this.players_action_enabled = true;
     }
 
     process_attacking(data) {
