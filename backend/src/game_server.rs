@@ -37,12 +37,7 @@ impl GameServer {
         self.clients[self.current_player] == *addr
     }
 
-    fn check_action_available(&mut self, addr: &Addr<Websocket>, action: Action) -> bool {
-        // if it's not player's turn no actions are availble
-        if self.check_player_turn(addr) == false {
-            return false;
-        }
-
+    fn check_action_available(&mut self, action: Action) -> bool {
         match action {
             Action::Select | Action::Deselect => {
                 // if player does not have any selections, they can select and deselect
@@ -109,7 +104,7 @@ impl Handler<inner::Request<Click>> for GameServer {
         // Choose what action should be done now
         if let Err(error) = match self.game.action(click.target, self.current_player as u32) {
             Ok(action) => {
-                match self.check_action_available(&message.sender, action) {
+                match self.check_action_available(action) {
                     true => match action {
                         Action::Deselect => Ok(self.deselect_unit()),
                         Action::Select => {
@@ -272,8 +267,8 @@ impl GameServer {
     }
 
     pub fn new_game(&mut self) {
-        let num_x = 4;
-        let num_y = 3;
+        let num_x = 12;
+        let num_y = 12;
 
         let mut game = Game::new(num_x, num_y);
         self.broadcast(State::new(STATE_WAIT.to_string()));
@@ -310,7 +305,7 @@ mod test {
     use actix::dev::channel;
 
     fn test_server() -> GameServer {
-        // Addres for player 0
+        // Address for player 0
         let channel: (
             channel::AddressSender<Websocket>,
             channel::AddressReceiver<Websocket>,
