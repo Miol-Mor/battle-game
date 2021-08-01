@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-slim
+FROM rust:slim
 
 WORKDIR /usr/src/backend
 COPY . .

@@ -1,5 +1,3 @@
-#![feature(map_into_keys_values)]
-
 use crate::config::CONFIG;
 
 use actix::{Actor, Addr};
