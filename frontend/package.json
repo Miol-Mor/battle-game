@@ -4,6 +4,7 @@
   "description": "",
   "main": "game.js",
   "dependencies": {
+    "dotenv-webpack": "^7.0.3",
     "pixi.js": "^5.2.4"
   },
   "devDependencies": {
