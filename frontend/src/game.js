@@ -72,7 +72,7 @@ export class Game {
     // create websocket to receive and send messages
     // private
     create_socket() {
-        this.socket = new WebSocket("ws://127.0.0.1:8088/ws/");
+        this.socket = new WebSocket(`ws://${process.env.WS_ADDRESS}:8088/ws/`);
 
         this.socket.onopen = function (e) {
             console.log("[open] Connection established");
