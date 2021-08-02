@@ -167,6 +167,12 @@ impl Handler<inner::LooseClient> for GameServer {
             .unwrap();
 
         self.clients.remove(index);
+
+        // restart game if one of active players left the game
+        // and there are more then one player left
+        if index < 2 && self.clients.len() > 1 {
+            self.new_game();
+        }
     }
 }
 
