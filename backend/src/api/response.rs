@@ -14,6 +14,7 @@ const CMD_ERROR: &str = "error";
 const CMD_HURT: &str = "hurt";
 const CMD_DIE: &str = "die";
 const CMD_UPDATE: &str = "update";
+const CMD_CONNECTION_QUEUE: &str = "queue";
 
 #[derive(Serialize)]
 pub struct Field {
@@ -169,6 +170,23 @@ impl Update {
         Update {
             cmd: CMD_UPDATE.to_string(),
             hexes,
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct ConnectionQueue {
+    cmd: String,
+    players_number: u32,
+    your_number: u32,
+}
+
+impl ConnectionQueue {
+    pub fn new(total_players: u32, queue_number: u32) -> ConnectionQueue {
+        ConnectionQueue {
+            cmd: CMD_CONNECTION_QUEUE.to_string(),
+            players_number: total_players,
+            your_number: queue_number,
         }
     }
 }

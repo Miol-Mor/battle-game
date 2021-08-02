@@ -10,7 +10,8 @@ use crate::api::inner;
 use crate::api::request;
 use crate::api::request::{Click, SkipTurn};
 use crate::api::response::{
-    Attacking, Deselecting, Die, Error, Field, Hurt, Moving, Selecting, State, Update,
+    Attacking, ConnectionQueue, Deselecting, Die, Error, Field, Hurt, Moving, Selecting, State,
+    Update,
 };
 use crate::game::{Action, Game};
 use crate::game_objects::hex_objects::content::Content;
@@ -107,6 +108,7 @@ impl Handler<inner::NewClient> for GameServer {
     fn handle(&mut self, client: inner::NewClient, _: &mut Self::Context) -> Self::Result {
         self.clients.push(client.address);
 
+        self.broadcast_connection_state();
         if self.clients.len() == 2 {
             self.new_game();
         }
@@ -130,6 +132,8 @@ impl Handler<inner::LooseClient> for GameServer {
         if index < 2 && self.clients.len() > 1 {
             self.new_game();
         }
+
+        self.broadcast_connection_state();
     }
 }
 
@@ -227,6 +231,13 @@ impl GameServer {
     fn send_error(&self, error_message: String) {
         let error = Error::new(error_message);
         communicator::broadcast(&error, vec![self.clients[self.current_player].clone()]);
+    }
+
+    fn broadcast_connection_state(&self) {
+        for (player_number, player_address) in self.clients.iter().enumerate() {
+            let msg = &ConnectionQueue::new(self.clients.len() as u32, (player_number + 1) as u32);
+            communicator::broadcast(msg, vec![player_address.clone()]);
+        }
     }
 
     pub fn new_game(&mut self) {
