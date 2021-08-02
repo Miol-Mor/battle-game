@@ -49,6 +49,7 @@ export class Game {
         this.cmd_map.hurt = this.process_hurt;
         this.cmd_map.die = this.process_die;
         this.cmd_map.update = this.process_update;
+        this.cmd_map.queue = this.process_queue;
 
 
         this.cmd_map.state = function (data) {
@@ -239,6 +240,11 @@ export class Game {
         this.clear_info();
     }
 
+    create_queue_status() {
+        this.queue_status = new PIXI.Text();
+        this.app.stage.addChild(this.queue_status);
+    }
+
     create_skip_button() {
         this.skip_button = new PIXI.Sprite(this.app.loader.resources["skip button"].texture);
         this.skip_button.buttonMode = true;
@@ -395,6 +401,22 @@ export class Game {
             console.log('hex: ', hex);
             this.change_hex(hex);
         });
+    }
+
+    process_queue(data) {
+        console.log('process_queue');
+
+        if (!this.queue_status) {
+            this.create_queue_status();
+        }
+
+        this.queue_status.text = `Total players: ${data.players_number}; Your number ${data.your_number}\n`;
+        if (data.your_number < 2) {
+            this.queue_status.text += 'Wait for second player';
+        }
+        if (data.your_number > 2) {
+            this.queue_status.text += 'Wait other players to leave';
+        }
     }
 
 
