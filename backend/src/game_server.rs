@@ -17,7 +17,7 @@ use crate::game_objects::hex_objects::content::Content;
 use crate::game_objects::hex_objects::wall::Wall;
 use crate::game_objects::unit::Unit;
 
-use eyre::{eyre, Result, WrapErr};
+use eyre::{Result, WrapErr};
 
 // TODO: make it better
 const STATE_WAIT: &str = "wait";
@@ -36,52 +36,6 @@ impl GameServer {
     fn check_player_turn(&self, addr: &Addr<Websocket>) -> bool {
         self.clients[self.current_player] == *addr
     }
-
-    fn check_action_available(&mut self, action: Action) -> bool {
-        match action {
-            Action::Select | Action::Deselect => {
-                // if player does not have any selections, they can select and deselect
-                let hex = match self.game.selected_hex {
-                    Some(hex) => hex,
-                    None => return true,
-                };
-
-                let unit = match hex.get_unit() {
-                    Some(unit) => unit,
-                    None => return false,
-                };
-
-                // if unit's moves not full, player can't select another or deselect
-                return !unit.has_moved();
-            }
-            Action::Move => {
-                let hex = match self.game.selected_hex {
-                    Some(hex) => hex,
-                    None => return false,
-                };
-
-                let unit = match hex.get_unit() {
-                    Some(unit) => unit,
-                    None => return false,
-                };
-
-                // if unit has movements, move is possible
-                return unit.movements > 0;
-            }
-            Action::Attack => {
-                let hex = match self.game.selected_hex {
-                    Some(hex) => hex,
-                    None => return false,
-                };
-
-                // if player has unit in selected hex, attack is possible
-                match hex.get_unit() {
-                    Some(_) => true,
-                    None => false,
-                }
-            }
-        }
-    }
 }
 
 impl Actor for GameServer {
@@ -97,26 +51,29 @@ impl Handler<inner::Request<Click>> for GameServer {
         let click = message.payload;
 
         if !self.check_player_turn(&message.sender) {
+            // TODO: make error
             debug!("Error: wrong player clicked");
             return;
         }
 
         // Choose what action should be done now
-        if let Err(error) = match self.game.action(click.target, self.current_player as u32) {
+        if let Err(error) = match self
+            .game
+            .get_current_action(click.target, self.current_player as u32)
+        {
             Ok(action) => {
-                match self.check_action_available(action) {
-                    true => match action {
-                        Action::Deselect => Ok(self.deselect_unit()),
-                        Action::Select => {
-                            // This arm is for selection and reselsection
-                            // If we have no unit selected, we can safely call deselect
-                            self.deselect_unit();
-                            self.select_unit(click.target)
-                        }
-                        Action::Move => self.move_unit(click.target),
-                        Action::Attack => self.attack_unit(click.target),
-                    },
-                    false => Err(eyre!("action unavailable")),
+                debug!("Selected hex: {:?}", self.game.selected_hex);
+                debug!("Action: {:?}", action);
+                match action {
+                    Action::Deselect => Ok(self.deselect_unit()),
+                    Action::Select => {
+                        // This arm is for selection and reselsection
+                        // If we have no unit selected, we can safely call deselect
+                        self.deselect_unit();
+                        self.select_unit(click.target)
+                    }
+                    Action::Move => self.move_unit(click.target),
+                    Action::Attack => self.attack_unit(click.target),
                 }
             }
             Err(error) => Err(error.wrap_err("determinate action")),
@@ -273,16 +230,16 @@ impl GameServer {
         let mut game = Game::new(num_x, num_y);
         self.broadcast(State::new(STATE_WAIT.to_string()));
 
-        if let Err(error) = game.set_unit(0, 0, Some(Unit::new(0, 9, [2, 5], 1))) {
+        if let Err(error) = game.set_unit(0, 0, Some(Unit::new(0, 9, [2, 5], 10))) {
             debug!("{:?}", error)
         }
-        if let Err(error) = game.set_unit(0, 2, Some(Unit::new(0, 3, [1, 2], 2))) {
+        if let Err(error) = game.set_unit(0, 2, Some(Unit::new(0, 3, [1, 2], 12))) {
             debug!("{:?}", error)
         }
-        if let Err(error) = game.set_unit(2, 0, Some(Unit::new(1, 5, [0, 3], 1))) {
+        if let Err(error) = game.set_unit(2, 0, Some(Unit::new(1, 5, [0, 3], 11))) {
             debug!("{:?}", error)
         }
-        if let Err(error) = game.set_unit(3, 2, Some(Unit::new(1, 7, [4, 6], 2))) {
+        if let Err(error) = game.set_unit(3, 2, Some(Unit::new(1, 7, [4, 6], 12))) {
             debug!("{:?}", error)
         }
         if let Err(error) = game.set_content(1, 1, Some(Content::Wall(Wall {}))) {

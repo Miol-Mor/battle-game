@@ -338,7 +338,7 @@ export class Game {
             );
         }
         else {
-            console.log('Not your turn. Be patient');
+            console.log('Be patient');
         }
     }
 

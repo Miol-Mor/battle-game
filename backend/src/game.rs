@@ -29,6 +29,15 @@ pub enum GameError {
 
     #[error("wrong hex")]
     WrongHex,
+
+    #[error("no hex selected")]
+    NoSelectedHex,
+
+    #[error("try to select enemies unit")]
+    SelectEnemy,
+
+    #[error("unit has been already moved")]
+    AlreadyMoved,
 }
 
 #[derive(Debug)]
@@ -56,29 +65,40 @@ impl Game {
     }
 
     // based on the state of the game and the position of the click, returns the action that should be performed
-    pub fn action(&mut self, target: Point, player: u32) -> Result<Action> {
-        // if there is no selected hex, it is select action
-        let selected_hex = match self.selected_hex {
-            Some(selected_hex) => selected_hex,
-            None => return Ok(Action::Select),
-        };
+    pub fn get_current_action(&mut self, target: Point, player: u32) -> Result<Action> {
+        let unit = self
+            .get_unit(target.x, target.y)
+            .wrap_err("get_current_action")?;
 
-        // if target point matches with selected, it's deselection action
-        if selected_hex.to_point() == target {
-            return Ok(Action::Deselect);
-        };
-
-        // if there is not unit under target point, it's move action
-        let unit = match self.get_unit(target.x, target.y).wrap_err("action")? {
-            Some(unit) => unit,
-            None => return Ok(Action::Move),
-        };
-
-        // if there is player's unit under target point, select that unit, otherwise attack
-        if unit.is_my(player as u32) {
-            Ok(Action::Select)
-        } else {
-            Ok(Action::Attack)
+        match (self.selected_hex, unit) {
+            (None, None) => Err(GameError::NoSelectedHex).wrap_err("get_current_action")?,
+            (None, Some(unit)) => match unit.is_my(player as u32) {
+                true => Ok(Action::Select),
+                false => Err(GameError::SelectEnemy).wrap_err("get_current_action")?,
+            },
+            (Some(_), None) => Ok(Action::Move),
+            (Some(hex), Some(unit)) => {
+                match unit.is_my(player as u32) {
+                    true => {
+                        // TODO: maybe refactor this block
+                        // TODO: simplify it hex.get_unit.wrap_err
+                        match hex.get_unit() {
+                            Some(selected_unit) => {
+                                if selected_unit.has_moved() {
+                                    return Err(GameError::AlreadyMoved)
+                                        .wrap_err("get_current_action")?;
+                                }
+                            }
+                            None => Err(GameError::NoUnit).wrap_err("get_current_action")?,
+                        }
+                        match self.selected_hex.unwrap().to_point() == target {
+                            true => Ok(Action::Deselect),
+                            false => Ok(Action::Select),
+                        }
+                    }
+                    false => Ok(Action::Attack),
+                }
+            }
         }
     }
 
@@ -151,6 +171,7 @@ impl Game {
             None => Err(GameError::NoHex).wrap_err("hex to disappeared after pathfinding")?,
         };
 
+        // TODO: change movement correctly
         unit.change_movements(unit.movements);
         to_hex.set_unit(Some(unit));
 
