@@ -10,8 +10,8 @@ use crate::api::inner;
 use crate::api::request;
 use crate::api::request::{Click, SkipTurn};
 use crate::api::response::{
-    Attacking, ConnectionQueue, Deselecting, Die, Error, Field, Hurt, Moving, Selecting, State,
-    Update,
+    Attacking, ConnectionQueue, Deselecting, Die, End, Error, Field, Hurt, Moving, Selecting,
+    State, Update,
 };
 use crate::game::{Action, Game};
 use crate::game_objects::hex_objects::content::Content;
@@ -208,9 +208,19 @@ impl GameServer {
 
         self.deselect_unit();
 
+        if self.game.ends() {
+            self.send_current_player(End::new(true));
+            self.change_player();
+            self.send_current_player(End::new(false));
+
+            debug!("Game state: {:?}", self.game);
+            return;
+        }
+
         self.send_current_player(State::new(STATE_WAIT.to_string()));
         self.change_player();
         self.send_current_player(State::new(STATE_ACTION.to_string()));
+
         debug!("Game state: {:?}", self.game);
     }
 

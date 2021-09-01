@@ -231,6 +231,10 @@ impl Game {
         Ok((hurt, die))
     }
 
+    pub fn ends(&self) -> bool {
+        self.field.players_number() == 1
+    }
+
     // Private api
 
     // Unit staff

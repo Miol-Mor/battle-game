@@ -51,9 +51,20 @@ export class Game {
         this.cmd_map.update = this.process_update;
         this.cmd_map.queue = this.process_queue;
 
-
         this.cmd_map.state = function (data) {
             this.change_state(data.state);
+        };
+
+        this.cmd_map.end = function (data) {
+            if (data.you_win == true) {
+                alert('YOU WIN!');
+            }
+            else if (data.you_win == false) {
+                alert('YOU LOSE!');
+            }
+            else {
+                alert('Game ends, but something strange happened');
+            }
         };
 
         this.cmd_map.error = function (data) {

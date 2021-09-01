@@ -14,6 +14,7 @@ const CMD_ERROR: &str = "error";
 const CMD_HURT: &str = "hurt";
 const CMD_DIE: &str = "die";
 const CMD_UPDATE: &str = "update";
+const CMD_GAME_END: &str = "end";
 const CMD_CONNECTION_QUEUE: &str = "queue";
 
 #[derive(Serialize)]
@@ -170,6 +171,21 @@ impl Update {
         Update {
             cmd: CMD_UPDATE.to_string(),
             hexes,
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct End {
+    cmd: String,
+    you_win: bool,
+}
+
+impl End {
+    pub fn new(you_win: bool) -> End {
+        End {
+            cmd: CMD_GAME_END.to_string(),
+            you_win,
         }
     }
 }
