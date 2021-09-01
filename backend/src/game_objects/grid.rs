@@ -1,5 +1,6 @@
 use super::hex::Hex;
 use serde::Serialize;
+use std::collections::HashSet;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Grid {
@@ -33,6 +34,19 @@ impl Grid {
             None => None,
             Some(hex) => Some(*hex),
         }
+    }
+
+    // get number of players on the field
+    pub fn players_number(&self) -> u32 {
+        let mut players = HashSet::new();
+
+        for hex in &self.hexes {
+            if let Some(unit) = hex.unit {
+                players.insert(unit.player);
+            };
+        }
+
+        players.len() as u32
     }
 }
 
