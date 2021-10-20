@@ -11,16 +11,23 @@ export class Game {
         this.app = null;
 
         this.STATES = {
+            OUTSIDE: 'outside',
             SELECT: 'select',
             ACTION: 'action',
             ATTACK: 'attack',
             WAIT: 'wait',
+            WATCH: 'watch',
         };
 
         // current game state
-        this.state = null;
+        this.state = this.STATES.OUTSIDE;
+        // to output client their number in queue and total number of clients
+        this.queue_status = null;
+        // info outputed in the top of the screen
+        this.info = null;
         // needed for block players action during moving animation
         this.players_action_enabled = false;
+
 
         // graphic constants
         this.BACKGROUND_COLOR = 0xd6b609;
@@ -29,6 +36,7 @@ export class Game {
         // set map of commands
         this.cmd_map = {};
 
+        this.cmd_map.queue = this.process_queue;
         // reset game (or create a new one if doesn't exist)
         this.cmd_map.field = this.create_new_field;
 
@@ -49,7 +57,6 @@ export class Game {
         this.cmd_map.hurt = this.process_hurt;
         this.cmd_map.die = this.process_die;
         this.cmd_map.update = this.process_update;
-        this.cmd_map.queue = this.process_queue;
 
         this.cmd_map.state = function (data) {
             this.change_state(data.state);
@@ -79,6 +86,7 @@ export class Game {
         this.create_stage();
         await this.load_images();
         this.create_socket();
+        this.create_queue_status();
     }
 
     // create websocket to receive and send messages
@@ -116,7 +124,7 @@ export class Game {
             case this.STATES.ACTION:
                 this.players_action_enabled = true;
             break;
-            case this.STATES.WAIT:
+            case this.STATES.WAIT, this.STATES.WATCH:
                 this.players_action_enabled = false;
             break;
         }
@@ -130,9 +138,13 @@ export class Game {
     process_message(event) {
         let data = JSON.parse(event.data);
         console.log(data);
-        this.cmd_map[data.cmd].call(this, data);
-        // TODO: not necessarry to call it on each message
-        this.show_tooltip();
+        // outside clients can't process almost all commands
+        const allowed_cmds = ['state', 'queue'];
+        if (allowed_cmds.includes(data.cmd) || this.state !== this.STATES.OUTSIDE) {
+            this.cmd_map[data.cmd].call(this, data);
+            // TODO: not necessarry to call it on each message
+            this.show_tooltip();
+        }
     }
 
     // process users clicks
@@ -158,6 +170,7 @@ export class Game {
         this.clear_app();
         this.create_grid(field_data);
         this.set_units_start_pos(field_data);
+        this.hide_queue_status();
         this.create_info();
         this.create_skip_button();
         this.set_hex_click_handlers();
@@ -256,6 +269,10 @@ export class Game {
         this.app.stage.addChild(this.queue_status);
     }
 
+    hide_queue_status() {
+        this.queue_status.visible = false;
+    }
+
     create_skip_button() {
         this.skip_button = new PIXI.Sprite(this.app.loader.resources["skip button"].texture);
         this.skip_button.buttonMode = true;
@@ -292,6 +309,8 @@ export class Game {
                 return 'Your turn: Move unit or attack\n';
             case this.STATES.ATTACK:
                 return 'Your turn: Attack\n';
+            case this.STATES.WATCH:
+                return `You are spectator. Just enjoy watching!\n${this.queue_status.text}\n`;
             default:
                 return 'Just wait a second\n';
         }
@@ -416,10 +435,6 @@ export class Game {
 
     process_queue(data) {
         console.log('process_queue');
-
-        if (!this.queue_status) {
-            this.create_queue_status();
-        }
 
         this.queue_status.text = `Total players: ${data.players_number}; Your number ${data.your_number}\n`;
         if (data.your_number < 2) {

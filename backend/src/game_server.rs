@@ -22,6 +22,7 @@ use eyre::{Result, WrapErr};
 
 // TODO: make it better
 const STATE_WAIT: &str = "wait";
+const STATE_WATCH: &str = "watch";
 const STATE_SELECT: &str = "select";
 const STATE_ACTION: &str = "action";
 const STATE_ATTACK: &str = "attack";
@@ -31,12 +32,7 @@ pub struct GameServer {
     pub clients: Vec<Addr<Websocket>>,
     pub game: Game,
     pub current_player: usize,
-}
-
-impl GameServer {
-    fn check_player_turn(&self, addr: &Addr<Websocket>) -> bool {
-        self.clients[self.current_player] == *addr
-    }
+    pub num_of_players: usize,
 }
 
 impl Actor for GameServer {
@@ -94,6 +90,7 @@ impl Handler<inner::Request<SkipTurn>> for GameServer {
         debug!("Handle skip turn");
 
         if !self.check_player_turn(&message.sender) {
+            // TODO: make error
             debug!("Error: wrong player clicked");
             return;
         }
@@ -143,9 +140,33 @@ impl GameServer {
             clients: vec![],
             game: Game::new(0, 0),
             current_player: 0,
+            num_of_players: 2,
         }
     }
 
+    // Messages
+    pub fn broadcast<T: Serialize>(&self, msg: T) {
+        communicator::broadcast(&msg, self.clients.clone())
+    }
+
+    fn send_current_player<T: Serialize>(&self, msg: T) {
+        // TODO: here and below is potential bug due to self.clients can not have index of self.current_player
+        communicator::broadcast(&msg, vec![self.clients[self.current_player].clone()]);
+    }
+
+    fn send_error(&self, error_message: String) {
+        let error = Error::new(error_message);
+        communicator::broadcast(&error, vec![self.clients[self.current_player].clone()]);
+    }
+
+    fn broadcast_connection_state(&self) {
+        for (player_number, player_address) in self.clients.iter().enumerate() {
+            let msg = &ConnectionQueue::new(self.clients.len() as u32, (player_number + 1) as u32);
+            communicator::broadcast(msg, vec![player_address.clone()]);
+        }
+    }
+
+    // Units
     fn select_unit(&mut self, target: Point) -> Result<()> {
         let selection = self.game.select_unit(target).wrap_err("select unit")?;
 
@@ -200,6 +221,7 @@ impl GameServer {
         Ok(())
     }
 
+    // Game logics
     pub fn next_turn(&mut self) {
         let hexes_to_change = self.game.restore_movements(self.current_player as u32);
         let message = Update::new(hexes_to_change);
@@ -224,30 +246,13 @@ impl GameServer {
         debug!("Game state: {:?}", self.game);
     }
 
-    pub fn broadcast<T: Serialize>(&self, msg: T) {
-        communicator::broadcast(&msg, self.clients.clone())
-    }
-
     fn change_player(&mut self) {
         self.current_player += 1;
         self.current_player %= 2;
     }
 
-    fn send_current_player<T: Serialize>(&self, msg: T) {
-        // TODO: here and below is potention bug due to self.clients can not have index of self.current_player
-        communicator::broadcast(&msg, vec![self.clients[self.current_player].clone()]);
-    }
-
-    fn send_error(&self, error_message: String) {
-        let error = Error::new(error_message);
-        communicator::broadcast(&error, vec![self.clients[self.current_player].clone()]);
-    }
-
-    fn broadcast_connection_state(&self) {
-        for (player_number, player_address) in self.clients.iter().enumerate() {
-            let msg = &ConnectionQueue::new(self.clients.len() as u32, (player_number + 1) as u32);
-            communicator::broadcast(msg, vec![player_address.clone()]);
-        }
+    fn check_player_turn(&self, addr: &Addr<Websocket>) -> bool {
+        self.clients[self.current_player] == *addr
     }
 
     pub fn new_game(&mut self) {
@@ -277,6 +282,12 @@ impl GameServer {
         }
 
         self.broadcast(Field::new(&game, num_x, num_y));
+        // communicator::broadcast(&Field::new(&game, num_x, num_y),
+        //                         self.clients[0..self.num_of_players].to_vec());
+        communicator::broadcast(
+            &State::new(STATE_WATCH.to_string()),
+            self.clients.clone()[self.num_of_players..self.clients.len()].to_vec(),
+        );
         self.send_current_player(State::new(STATE_ACTION.to_string()));
         self.game = game;
     }
