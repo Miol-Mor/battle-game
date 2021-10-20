@@ -60,6 +60,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
 
     fn finished(&mut self, ctx: &mut Self::Context) {
         debug!("Client disconnected");
+        // TODO: Send everyone - player disconnected (stop current game)
         self.server_addr
             .do_send(api::inner::LooseClient::new(ctx.address()));
     }
