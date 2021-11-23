@@ -4,6 +4,8 @@ use std::collections::HashSet;
 
 #[derive(Serialize, Debug, Clone)]
 pub struct Grid {
+    pub num_x: u32,
+    pub num_y: u32,
     pub hexes: Vec<Hex>,
 }
 
@@ -20,7 +22,11 @@ impl Grid {
             })
             .collect();
 
-        Grid { hexes }
+        Grid {
+            num_x,
+            num_y,
+            hexes,
+        }
     }
 
     // get hex with further change
@@ -112,6 +118,8 @@ mod test {
             content: Some(Content::Wall(Wall {})),
         };
         let grid = Grid {
+            num_x: 1,
+            num_y: 2,
             hexes: vec![hex_one, hex_two],
         };
         let grid_string = serde_json::to_string(&grid).unwrap();
@@ -120,7 +128,10 @@ mod test {
 
         assert_eq!(
             grid_string,
-            format!("{{\"hexes\":[{},{}]}}", hex_one_string, hex_two_string),
+            format!(
+                "{{\"num_x\":1,\"num_y\":2,\"hexes\":[{},{}]}}",
+                hex_one_string, hex_two_string
+            ),
         );
     }
 }

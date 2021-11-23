@@ -233,6 +233,7 @@ export class Game {
 
         let hexes = field_data.field.hexes;
         for (let i = 0; i < field_data.num_x * field_data.num_y; i++) {
+            console.log(i);
             if (hexes[i].content && hexes[i].content.type === 'wall') {
                 grid.hexes[hexes[i].x][hexes[i].y].set_content('wall');
             }
@@ -294,7 +295,12 @@ export class Game {
     set_info(params) {
         this.clear_info();
         for (let [key, value] of Object.entries(params)) {
-            this.info.text += `${key}: ${value}\n`;
+            let text_value = value;
+            if (Array.isArray(value)) {
+                text_value = value.join('-');
+            }
+
+            this.info.text += `${key}: ${text_value}\n`;
         }
     }
 

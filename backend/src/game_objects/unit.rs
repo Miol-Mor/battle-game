@@ -1,3 +1,4 @@
+use rand::Rng;
 use serde::Serialize;
 
 #[derive(Clone, Serialize, Debug, Copy)]
@@ -19,6 +20,24 @@ impl Unit {
             speed,
             movements: speed,
         }
+    }
+
+    pub fn random(
+        hp_min_max: (u8, u8),
+        damage_min_max: (u8, u8),
+        damage_interval: (u8, u8),
+        speed_min_max: (u8, u8),
+        player: u32,
+    ) -> Unit {
+        let mut rng = rand::thread_rng();
+
+        let hp = rng.gen_range(hp_min_max.0, hp_min_max.1 + 1) as u32;
+        let damage_min = rng.gen_range(damage_min_max.0, damage_min_max.1) as u32;
+        let damage_max =
+            damage_min + rng.gen_range(damage_interval.0, damage_interval.1 + 1) as u32;
+        let speed = rng.gen_range(speed_min_max.0, speed_min_max.1 + 1) as u32;
+
+        Unit::new(player, hp, [damage_min, damage_max], speed)
     }
 
     pub fn change_hp(&mut self, diff: i32) {

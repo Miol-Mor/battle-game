@@ -256,34 +256,10 @@ impl GameServer {
     }
 
     pub fn new_game(&mut self) {
-        let num_x = 12;
-        let num_y = 12;
-
-        let mut game = Game::new(num_x, num_y);
+        let game = Game::random();
         self.broadcast(State::new(STATE_WAIT.to_string()));
 
-        if let Err(error) = game.set_unit(0, 0, Some(Unit::new(0, 9, [2, 5], 10))) {
-            debug!("{:?}", error)
-        }
-        if let Err(error) = game.set_unit(0, 2, Some(Unit::new(0, 3, [1, 2], 12))) {
-            debug!("{:?}", error)
-        }
-        if let Err(error) = game.set_unit(2, 0, Some(Unit::new(1, 5, [0, 3], 11))) {
-            debug!("{:?}", error)
-        }
-        if let Err(error) = game.set_unit(3, 2, Some(Unit::new(1, 7, [4, 6], 12))) {
-            debug!("{:?}", error)
-        }
-        if let Err(error) = game.set_content(1, 1, Some(Content::Wall(Wall {}))) {
-            debug!("{:?}", error)
-        }
-        if let Err(error) = game.set_content(2, 2, Some(Content::Wall(Wall {}))) {
-            debug!("{:?}", error)
-        }
-
-        self.broadcast(Field::new(&game, num_x, num_y));
-        // communicator::broadcast(&Field::new(&game, num_x, num_y),
-        //                         self.clients[0..self.num_of_players].to_vec());
+        self.broadcast(Field::new(&game));
         communicator::broadcast(
             &State::new(STATE_WATCH.to_string()),
             self.clients.clone()[self.num_of_players..self.clients.len()].to_vec(),
