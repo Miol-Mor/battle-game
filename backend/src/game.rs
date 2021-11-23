@@ -2,6 +2,7 @@ use crate::api::common::Point;
 use crate::game_objects::grid::Grid;
 use crate::game_objects::hex::Hex;
 use crate::game_objects::hex_objects::content::Content;
+use crate::game_objects::hex_objects::wall::Wall;
 use crate::game_objects::unit::Unit;
 
 use eyre::{Result, WrapErr};
@@ -9,6 +10,15 @@ use rand::Rng;
 use std::collections::HashMap;
 use thiserror::Error;
 use tracing::instrument;
+
+const NUM_X: (u32, u32) = (5, 12);
+const NUM_Y: (u32, u32) = (5, 12);
+const WALLS_PERCENT: (u8, u8) = (0, 30);
+const NUM_UNITS: (u8, u8) = (2, 5);
+const UNIT_HP: (u8, u8) = (1, 10);
+const UNIT_MIN_DAMAGE: (u8, u8) = (1, 5);
+const UNIT_DAMAGE_INTERVAL: (u8, u8) = (1, 5);
+const UNIT_SPEED: (u8, u8) = (1, 8);
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -62,6 +72,43 @@ impl Game {
             field: Grid::new(num_x, num_y),
             selected_hex: None,
         }
+    }
+
+    pub fn random() -> Game {
+        let mut rng = rand::thread_rng();
+        let num_x = rng.gen_range(NUM_X.0, NUM_X.1 + 1);
+        let num_y = rng.gen_range(NUM_Y.0, NUM_Y.1 + 1);
+        let mut game = Game::new(num_x, num_y);
+
+        assert!(WALLS_PERCENT.1 <= 100);
+        let walls_percent = rng.gen_range(WALLS_PERCENT.0, WALLS_PERCENT.1 + 1);
+        debug!("walls percent {:?}", walls_percent);
+
+        let num_of_walls = (num_x * num_y * walls_percent as u32 / 100) as u8;
+        for _ in 0..num_of_walls {
+            if let Err(e) = game.set_content_randomly(Content::Wall(Wall {})) {
+                panic!("Error while setting content for new game randomly:\n{}", e);
+            }
+        }
+
+        let num_of_units = rng.gen_range(NUM_UNITS.0, NUM_UNITS.1 + 1);
+        debug!("unit number {:?}", num_of_units);
+        for player_number in 0..2 {
+            for _ in 0..num_of_units {
+                let unit = Unit::random(
+                    UNIT_HP,
+                    UNIT_MIN_DAMAGE,
+                    UNIT_DAMAGE_INTERVAL,
+                    UNIT_SPEED,
+                    player_number,
+                );
+                if let Err(e) = game.set_unit_randomly(unit) {
+                    panic!("Error while setting unit for new game randomly:\n{}", e);
+                }
+            }
+        }
+
+        game
     }
 
     // based on the state of the game and the position of the click, returns the action that should be performed
@@ -451,6 +498,41 @@ impl Game {
         // path was restored from last point to first, so we reverse it
         path.reverse();
         Ok(path)
+    }
+
+    fn set_content_randomly(&mut self, content: Content) -> Result<()> {
+        let mut rng = rand::thread_rng();
+        loop {
+            let x = rng.gen_range(0, self.field.num_x);
+            let y = rng.gen_range(0, self.field.num_y);
+            debug!("\ngetting hex with coordinates {}:{}", x, y);
+            let hex = match self.field.get_hex_mut(x, y) {
+                Some(hex) => hex,
+                None => Err(GameError::NoHex).wrap_err_with(|| format!("get hex {}:{}", x, y))?,
+            };
+
+            if hex.is_empty() {
+                hex.set_content(Some(content));
+                break Ok(());
+            }
+        }
+    }
+
+    fn set_unit_randomly(&mut self, unit: Unit) -> Result<()> {
+        let mut rng = rand::thread_rng();
+        loop {
+            let x = rng.gen_range(0, self.field.num_x);
+            let y = rng.gen_range(0, self.field.num_y);
+            let hex = match self.field.get_hex_mut(x, y) {
+                Some(hex) => hex,
+                None => Err(GameError::NoHex).wrap_err_with(|| format!("get hex {}:{}", x, y))?,
+            };
+
+            if hex.is_empty() {
+                hex.set_unit(Some(unit));
+                break Ok(());
+            }
+        }
     }
 }
 

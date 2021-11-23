@@ -40,6 +40,10 @@ impl Hex {
         self.content = content;
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.content.is_none() && self.unit.is_none()
+    }
+
     pub fn to_point(&self) -> Point {
         Point {
             x: self.x,

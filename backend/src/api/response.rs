@@ -26,11 +26,11 @@ pub struct Field {
 }
 
 impl Field {
-    pub fn new(game: &Game, num_x: u32, num_y: u32) -> Field {
+    pub fn new(game: &Game) -> Field {
         Field {
             cmd: CMD_FIELD.to_string(),
-            num_x,
-            num_y,
+            num_x: game.field.num_x,
+            num_y: game.field.num_y,
             field: game.field.clone(),
         }
     }
