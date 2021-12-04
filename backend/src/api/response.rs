@@ -195,14 +195,20 @@ pub struct ConnectionQueue {
     cmd: String,
     players_number: u32,
     your_number: u32,
+    total_players_number: u32,
 }
 
 impl ConnectionQueue {
-    pub fn new(total_players: u32, queue_number: u32) -> ConnectionQueue {
+    pub fn new(
+        total_players: u32,
+        queue_number: u32,
+        total_players_number: u32,
+    ) -> ConnectionQueue {
         ConnectionQueue {
             cmd: CMD_CONNECTION_QUEUE.to_string(),
             players_number: total_players,
             your_number: queue_number,
+            total_players_number: total_players_number,
         }
     }
 }
