@@ -11,10 +11,10 @@ use std::collections::HashMap;
 use thiserror::Error;
 use tracing::instrument;
 
-const NUM_X: (u32, u32) = (5, 12);
-const NUM_Y: (u32, u32) = (5, 12);
-const WALLS_PERCENT: (u8, u8) = (0, 30);
-const NUM_UNITS: (u8, u8) = (2, 5);
+const NUM_X: (u32, u32) = (5, 15);
+const NUM_Y: (u32, u32) = (5, 15);
+const WALLS_PERCENT: (u8, u8) = (0, 40);
+const NUM_UNITS: (u8, u8) = (2, 6);
 const UNIT_HP: (u8, u8) = (1, 10);
 const UNIT_MIN_DAMAGE: (u8, u8) = (1, 5);
 const UNIT_DAMAGE_INTERVAL: (u8, u8) = (1, 5);
@@ -74,7 +74,7 @@ impl Game {
         }
     }
 
-    pub fn random() -> Game {
+    pub fn random(num_of_players: usize) -> Game {
         let mut rng = rand::thread_rng();
         let num_x = rng.gen_range(NUM_X.0, NUM_X.1 + 1);
         let num_y = rng.gen_range(NUM_Y.0, NUM_Y.1 + 1);
@@ -93,14 +93,14 @@ impl Game {
 
         let num_of_units = rng.gen_range(NUM_UNITS.0, NUM_UNITS.1 + 1);
         debug!("unit number {:?}", num_of_units);
-        for player_number in 0..2 {
+        for player_number in 0..num_of_players {
             for _ in 0..num_of_units {
                 let unit = Unit::random(
                     UNIT_HP,
                     UNIT_MIN_DAMAGE,
                     UNIT_DAMAGE_INTERVAL,
                     UNIT_SPEED,
-                    player_number,
+                    player_number as u32,
                 );
                 if let Err(e) = game.set_unit_randomly(unit) {
                     panic!("Error while setting unit for new game randomly:\n{}", e);

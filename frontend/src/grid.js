@@ -92,11 +92,12 @@ export class Hex_grid {
     // row_n, col_n - number of rows and columns in grid
     // cellsize - side of a hexcell (length of its edge)
     // x_offset, y_offset - left and top offsets inside stage
-    constructor(stage, num_x = 8, num_y = 6, hex_size = 50, x_offset = 50, y_offset = 50) {
+    constructor(stage, num_x = 8, num_y = 6, x_offset = 150, y_offset = 50) {
         this.stage = stage;
         this.num_x = num_x;
         this.num_y = num_y;
-        this.hex_size = hex_size;
+        // Magic formula to make fields size fit the screen
+        this.hex_size = Number(Math.min((window.innerWidth - x_offset) / num_x, (window.innerHeight - y_offset) / num_y * 2 / Math.sqrt(3)) / 2);
         this.x_offset = x_offset;
         this.y_offset = y_offset;
         // hexes - matrix of hexes (call - hexes[y][x], where y - number of row, x - number of column)

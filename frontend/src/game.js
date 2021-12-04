@@ -217,6 +217,9 @@ export class Game {
     load_images() {
         this.app.loader.add('red unit', 'images/red unit.png');
         this.app.loader.add('blue unit', 'images/blue unit.png');
+        this.app.loader.add('green unit', 'images/green unit.png');
+        this.app.loader.add('white unit', 'images/white unit.png');
+        this.app.loader.add('black unit', 'images/black unit.png');
         this.app.loader.add('skip button', 'images/skip button.png');
 
         return new Promise(resolve => {
@@ -228,12 +231,11 @@ export class Game {
 
     // private
     create_grid(field_data) {
-        let grid = new Hex_grid(this.app.stage, field_data.num_x, field_data.num_y, 20, 100, 100);
+        let grid = new Hex_grid(this.app.stage, field_data.num_x, field_data.num_y, 150, 50);
         grid.draw();
 
         let hexes = field_data.field.hexes;
         for (let i = 0; i < field_data.num_x * field_data.num_y; i++) {
-            console.log(i);
             if (hexes[i].content && hexes[i].content.type === 'wall') {
                 grid.hexes[hexes[i].x][hexes[i].y].set_content('wall');
             }
@@ -248,10 +250,22 @@ export class Game {
         for (let i = 0; i < field_data.num_x * field_data.num_y; i++) {
             if (hexes[i].unit !== undefined) {
                 let texture;
-                if (hexes[i].unit.player === 1) {
-                    texture = this.app.loader.resources["blue unit"].texture;
-                } else {
-                    texture = this.app.loader.resources["red unit"].texture;
+                // TODO: refactor this
+                switch (hexes[i].unit.player) {
+                    case 0:
+                        texture = this.app.loader.resources["blue unit"].texture;
+                    break;
+                    case 1:
+                        texture = this.app.loader.resources["red unit"].texture;
+                    break;
+                    case 2:
+                        texture = this.app.loader.resources["green unit"].texture;
+                    break;
+                    case 3:
+                        texture = this.app.loader.resources["white unit"].texture;
+                    break;
+                    default:
+                        texture = this.app.loader.resources["black unit"].texture;
                 }
                 this.create_unit(texture, this.grid.hex_size, hexes[i].unit, hexes[i].x, hexes[i].y);
             }
@@ -295,6 +309,8 @@ export class Game {
     set_info(params) {
         this.clear_info();
         for (let [key, value] of Object.entries(params)) {
+            if (key === 'movements') continue;
+            if (key === 'player') value += 1;
             let text_value = value;
             if (Array.isArray(value)) {
                 text_value = value.join('-');
@@ -442,11 +458,11 @@ export class Game {
     process_queue(data) {
         console.log('process_queue');
 
-        this.queue_status.text = `Total players: ${data.players_number}; Your number ${data.your_number}\n`;
-        if (data.your_number < 2) {
-            this.queue_status.text += 'Wait for second player';
+        this.queue_status.text = `Players connected: ${data.players_number}; Your number ${data.your_number}; Total players: ${data.total_players_number}\n`;
+        if (data.your_number < data.total_players_number) {
+            this.queue_status.text += 'Wait for other players';
         }
-        if (data.your_number > 2) {
+        if (data.your_number > data.total_players_number) {
             this.queue_status.text += 'Wait other players to leave';
         }
     }

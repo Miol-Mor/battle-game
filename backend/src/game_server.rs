@@ -106,7 +106,7 @@ impl Handler<inner::NewClient> for GameServer {
         self.clients.push(client.address);
 
         self.broadcast_connection_state();
-        if self.clients.len() == 2 {
+        if self.clients.len() == self.num_of_players {
             self.new_game();
         }
     }
@@ -126,7 +126,7 @@ impl Handler<inner::LooseClient> for GameServer {
 
         // restart game if one of active players left the game
         // and there are more then one player left
-        if index < 2 && self.clients.len() > 1 {
+        if index < self.num_of_players && self.clients.len() >= self.num_of_players {
             self.new_game();
         }
 
@@ -140,7 +140,7 @@ impl GameServer {
             clients: vec![],
             game: Game::new(0, 0),
             current_player: 0,
-            num_of_players: 2,
+            num_of_players: 4,
         }
     }
 
@@ -161,7 +161,11 @@ impl GameServer {
 
     fn broadcast_connection_state(&self) {
         for (player_number, player_address) in self.clients.iter().enumerate() {
-            let msg = &ConnectionQueue::new(self.clients.len() as u32, (player_number + 1) as u32);
+            let msg = &ConnectionQueue::new(
+                self.clients.len() as u32,
+                (player_number + 1) as u32,
+                self.num_of_players as u32,
+            );
             communicator::broadcast(msg, vec![player_address.clone()]);
         }
     }
@@ -248,7 +252,7 @@ impl GameServer {
 
     fn change_player(&mut self) {
         self.current_player += 1;
-        self.current_player %= 2;
+        self.current_player %= self.num_of_players;
     }
 
     fn check_player_turn(&self, addr: &Addr<Websocket>) -> bool {
@@ -256,7 +260,7 @@ impl GameServer {
     }
 
     pub fn new_game(&mut self) {
-        let game = Game::random();
+        let game = Game::random(self.num_of_players);
         self.broadcast(State::new(STATE_WAIT.to_string()));
 
         self.broadcast(Field::new(&game));
