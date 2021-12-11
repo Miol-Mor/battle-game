@@ -261,8 +261,18 @@ impl GameServer {
     }
 
     fn change_player(&mut self) {
-        self.current_player += 1;
-        self.current_player %= self.num_of_players;
+        loop {
+            self.current_player += 1;
+            self.current_player %= self.num_of_players;
+            if self
+                .game
+                .field
+                .players_alive()
+                .contains(&(self.current_player as u32))
+            {
+                break;
+            }
+        }
     }
 
     fn check_player_turn(&self, addr: &Addr<Websocket>) -> bool {
