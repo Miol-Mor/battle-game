@@ -154,6 +154,17 @@ impl GameServer {
         communicator::broadcast(&msg, vec![self.clients[self.current_player].clone()]);
     }
 
+    fn send_other_players<T: Serialize>(&self, msg: T) {
+        // TODO: May be optimized
+        let mut other_players: Vec<Addr<Websocket>> = Vec::new();
+        for i in 0..self.num_of_players {
+            if i != self.current_player {
+                other_players.push(self.clients[i].clone());
+            }
+        }
+        communicator::broadcast(&msg, other_players);
+    }
+
     fn send_error(&self, error_message: String) {
         let error = Error::new(error_message);
         communicator::broadcast(&error, vec![self.clients[self.current_player].clone()]);
@@ -236,8 +247,7 @@ impl GameServer {
 
         if self.game.ends() {
             self.send_current_player(End::new(true));
-            self.change_player();
-            self.send_current_player(End::new(false));
+            self.send_other_players(End::new(false));
 
             debug!("Game state: {:?}", self.game);
             return;
