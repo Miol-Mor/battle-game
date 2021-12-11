@@ -43,7 +43,7 @@ impl Grid {
     }
 
     // get number of players on the field
-    pub fn players_number(&self) -> u32 {
+    pub fn players_alive(&self) -> HashSet<u32> {
         let mut players = HashSet::new();
 
         for hex in &self.hexes {
@@ -52,7 +52,7 @@ impl Grid {
             };
         }
 
-        players.len() as u32
+        players
     }
 }
 

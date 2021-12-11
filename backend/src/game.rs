@@ -279,7 +279,7 @@ impl Game {
     }
 
     pub fn ends(&self) -> bool {
-        self.field.players_number() == 1
+        self.field.players_alive().len() == 1
     }
 
     // Private api
