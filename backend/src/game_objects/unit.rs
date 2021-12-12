@@ -59,6 +59,10 @@ impl Unit {
         self.movements != self.speed
     }
 
+    pub fn has_no_moves(self) -> bool {
+        self.movements == 0
+    }
+
     pub fn is_my(self, player: u32) -> bool {
         self.player == player
     }
