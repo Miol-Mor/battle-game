@@ -218,8 +218,8 @@ impl Game {
             None => Err(GameError::NoHex).wrap_err("hex to disappeared after pathfinding")?,
         };
 
-        // TODO: change movement correctly
-        unit.change_movements(unit.movements);
+        // TODO: change movement correctly - done!
+        unit.change_movements((path.len() - 1) as u32);
         to_hex.set_unit(Some(unit));
 
         Ok(path)
