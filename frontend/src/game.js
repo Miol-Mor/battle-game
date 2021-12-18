@@ -87,6 +87,7 @@ export class Game {
         await this.load_images();
         this.create_socket();
         this.create_queue_status();
+        this.create_start_button();
     }
 
     // create websocket to receive and send messages
@@ -158,6 +159,16 @@ export class Game {
     process_skip_turn() {
         console.log('skip turn');
         this.send_to_backend('skip_turn');
+    }
+
+    process_start(event) {
+        console.log('start game');
+        this.socket.send(
+            JSON.stringify({
+                "cmd": 'num_players',
+                "num": 3,
+            })
+        );
     }
 
 
@@ -286,6 +297,18 @@ export class Game {
 
     hide_queue_status() {
         this.queue_status.visible = false;
+    }
+
+    create_start_button() {
+        this.start_button = new PIXI.Sprite(this.app.loader.resources["red unit"].texture);
+        this.start_button.buttonMode = true;
+        this.start_button.anchor.set(0);
+        this.start_button.position.x = 100;
+        this.start_button.position.y = 100;
+        this.start_button.interactive = true;
+
+        this.app.stage.addChild(this.start_button);
+        this.start_button.on('click', this.process_start.bind(this));
     }
 
     create_skip_button() {

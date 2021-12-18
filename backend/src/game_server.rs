@@ -8,7 +8,7 @@ use crate::websocket::Websocket;
 use crate::api::common::Point;
 use crate::api::inner;
 use crate::api::request;
-use crate::api::request::{Click, SkipTurn};
+use crate::api::request::{Click, SkipTurn, NumPlayers};
 use crate::api::response::{
     Attacking, ConnectionQueue, Deselecting, Die, End, Error, Field, Hurt, Moving, Selecting,
     State, Update,
@@ -96,6 +96,18 @@ impl Handler<inner::Request<SkipTurn>> for GameServer {
         }
 
         self.next_turn()
+    }
+}
+
+impl Handler<inner::Request<NumPlayers>> for GameServer {
+    type Result = ();
+
+    fn handle(&mut self, message: inner::Request<NumPlayers>, _: &mut Self::Context) -> Self::Result {
+        debug!("Handle set players number");
+
+        let data = message.payload;
+        debug!("{:?}", data);
+        self.num_of_players = 2;
     }
 }
 
