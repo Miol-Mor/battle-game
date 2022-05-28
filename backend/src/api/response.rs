@@ -17,6 +17,11 @@ const CMD_UPDATE: &str = "update";
 const CMD_GAME_END: &str = "end";
 const CMD_CONNECTION_QUEUE: &str = "queue";
 
+// End state constants
+const END_STATE_WIN: &str = "win";
+const END_STATE_LOSE: &str = "lose";
+const END_STATE_DISCONNECTED: &str = "disconnected";
+
 #[derive(Serialize)]
 pub struct Field {
     cmd: String,
@@ -176,16 +181,27 @@ impl Update {
 }
 
 #[derive(Serialize, Debug)]
+pub enum EndState {
+    Win,
+    Lose,
+    Disconnected,
+}
+
+#[derive(Serialize, Debug)]
 pub struct End {
     cmd: String,
-    you_win: bool,
+    state: String,
 }
 
 impl End {
-    pub fn new(you_win: bool) -> End {
+    pub fn new(state: EndState) -> End {
         End {
             cmd: CMD_GAME_END.to_string(),
-            you_win,
+            state: match state {
+                EndState::Win => END_STATE_WIN.to_string(),
+                EndState::Lose => END_STATE_LOSE.to_string(),
+                EndState::Disconnected => END_STATE_DISCONNECTED.to_string(),
+            },
         }
     }
 }
@@ -195,20 +211,16 @@ pub struct ConnectionQueue {
     cmd: String,
     players_number: u32,
     your_number: u32,
-    total_players_number: u32,
+    game_started: bool,
 }
 
 impl ConnectionQueue {
-    pub fn new(
-        total_players: u32,
-        queue_number: u32,
-        total_players_number: u32,
-    ) -> ConnectionQueue {
+    pub fn new(total_players: u32, queue_number: u32, game_started: bool) -> ConnectionQueue {
         ConnectionQueue {
             cmd: CMD_CONNECTION_QUEUE.to_string(),
             players_number: total_players,
             your_number: queue_number,
-            total_players_number: total_players_number,
+            game_started,
         }
     }
 }

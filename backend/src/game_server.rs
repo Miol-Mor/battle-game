@@ -1,3 +1,4 @@
+// TODO: Refactor it
 use actix::{Actor, Addr, Context, Handler};
 
 use serde::Serialize;
@@ -8,10 +9,10 @@ use crate::websocket::Websocket;
 use crate::api::common::Point;
 use crate::api::inner;
 use crate::api::request;
-use crate::api::request::{Click, SkipTurn};
+use crate::api::request::{Click, SkipTurn, StartGame};
 use crate::api::response::{
-    Attacking, ConnectionQueue, Deselecting, Die, End, Error, Field, Hurt, Moving, Selecting,
-    State, Update,
+    Attacking, ConnectionQueue, Deselecting, Die, End, EndState, Error, Field, Hurt, Moving,
+    Selecting, State, Update,
 };
 use crate::game::{Action, Game};
 use crate::game_objects::hex_objects::content::Content;
@@ -33,6 +34,7 @@ pub struct GameServer {
     pub game: Game,
     pub current_player: usize,
     pub num_of_players: usize,
+    pub game_started: bool,
 }
 
 impl Actor for GameServer {
@@ -99,6 +101,28 @@ impl Handler<inner::Request<SkipTurn>> for GameServer {
     }
 }
 
+impl Handler<inner::Request<StartGame>> for GameServer {
+    type Result = ();
+
+    fn handle(
+        &mut self,
+        message: inner::Request<StartGame>,
+        _: &mut Self::Context,
+    ) -> Self::Result {
+        debug!("Handle start game");
+        if self.game_started {
+            debug!("Error: game has been already started");
+            return;
+        }
+        if self.clients.len() < 2 {
+            debug!("Error: at least 2 players needed to start game");
+            return;
+        }
+        self.num_of_players = self.clients.len();
+        self.new_game();
+    }
+}
+
 impl Handler<inner::NewClient> for GameServer {
     type Result = ();
 
@@ -106,9 +130,6 @@ impl Handler<inner::NewClient> for GameServer {
         self.clients.push(client.address);
 
         self.broadcast_connection_state();
-        if self.clients.len() == self.num_of_players {
-            self.new_game();
-        }
     }
 }
 
@@ -124,10 +145,9 @@ impl Handler<inner::LooseClient> for GameServer {
 
         self.clients.remove(index);
 
-        // restart game if one of active players left the game
-        // and there are more then one player left
-        if index < self.num_of_players && self.clients.len() >= self.num_of_players {
-            self.new_game();
+        // Stop game if one of active players leaves
+        if self.game_started && index < self.num_of_players {
+            self.stop_game();
         }
 
         self.broadcast_connection_state();
@@ -140,7 +160,8 @@ impl GameServer {
             clients: vec![],
             game: Game::new(0, 0),
             current_player: 0,
-            num_of_players: 4,
+            num_of_players: 0, // Undefined number of players on the start
+            game_started: false,
         }
     }
 
@@ -175,7 +196,7 @@ impl GameServer {
             let msg = &ConnectionQueue::new(
                 self.clients.len() as u32,
                 (player_number + 1) as u32,
-                self.num_of_players as u32,
+                self.game_started,
             );
             communicator::broadcast(msg, vec![player_address.clone()]);
         }
@@ -246,10 +267,10 @@ impl GameServer {
         self.deselect_unit();
 
         if self.game.ends() {
-            self.send_current_player(End::new(true));
-            self.send_other_players(End::new(false));
-
-            debug!("Game state: {:?}", self.game);
+            self.send_current_player(End::new(EndState::Win));
+            self.send_other_players(End::new(EndState::Lose));
+            self.game_started = false;
+            self.broadcast_connection_state();
             return;
         }
 
@@ -284,11 +305,20 @@ impl GameServer {
         self.broadcast(State::new(STATE_WAIT.to_string()));
 
         self.broadcast(Field::new(&game));
+        // TODO: Make a function broadcast to spectators
         communicator::broadcast(
             &State::new(STATE_WATCH.to_string()),
             self.clients.clone()[self.num_of_players..self.clients.len()].to_vec(),
         );
         self.send_current_player(State::new(STATE_ACTION.to_string()));
         self.game = game;
+        self.game_started = true;
+    }
+
+    pub fn stop_game(&mut self) {
+        debug!("Stop game");
+        self.broadcast(End::new(EndState::Disconnected));
+        self.game_started = false;
+        self.broadcast_connection_state();
     }
 }

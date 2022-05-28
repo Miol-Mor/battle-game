@@ -21,9 +21,11 @@ export class Game {
 
         // current game state
         this.state = this.STATES.OUTSIDE;
+        // if game has been started on the server?
+        this.game_started = false;
         // to output client their number in queue and total number of clients
         this.queue_status = null;
-        // info outputed in the top of the screen
+        // info outputted in the top of the screen
         this.info = null;
         // needed for block players action during moving animation
         this.players_action_enabled = false;
@@ -63,14 +65,22 @@ export class Game {
         };
 
         this.cmd_map.end = function (data) {
-            if (data.you_win == true) {
-                alert('YOU WIN!');
-            }
-            else if (data.you_win == false) {
-                alert('YOU LOSE!');
-            }
-            else {
-                alert('Game ends, but something strange happened');
+            this.clear_app();
+            this.set_defaults();
+            this.create_queue_status();
+            this.create_start_button();
+            switch (data.state) {
+                case 'win':
+                    alert('YOU WIN!');
+                    break;
+                case 'lose':
+                    alert('YOU LOSE!');
+                    break;
+                case 'disconnected':
+                    alert('Game was aborted because one of players was disconnected');
+                    break;
+                default:
+                    alert('Game ends, but something strange happened');
             }
         };
 
@@ -87,6 +97,7 @@ export class Game {
         await this.load_images();
         this.create_socket();
         this.create_queue_status();
+        this.create_start_button();
     }
 
     // create websocket to receive and send messages
@@ -160,6 +171,15 @@ export class Game {
         this.send_to_backend('skip_turn');
     }
 
+    process_start(event) {
+        console.log('start game');
+        this.socket.send(
+            JSON.stringify({
+                "cmd": 'start_game',
+            })
+        );
+    }
+
 
     // Create new field functions
     // private
@@ -180,11 +200,6 @@ export class Game {
     set_defaults() {
         // grid - grid for this game (Hex_grid)
         this.grid = null;
-
-        // players_num - number of players (for the future)
-        this.players_num = 2;
-        // my_num - number of player using this client
-        this.my_num = 1;
 
         this.cur_hex = null;
     }
@@ -286,6 +301,27 @@ export class Game {
 
     hide_queue_status() {
         this.queue_status.visible = false;
+    }
+
+    create_start_button() {
+        this.start_button = new PIXI.Sprite(this.app.loader.resources["red unit"].texture);
+        this.start_button.buttonMode = true;
+        this.start_button.anchor.set(0);
+        this.start_button.position.x = 100;
+        this.start_button.position.y = 100;
+        this.start_button.interactive = true;
+        this.start_button.visible = false;
+
+        this.app.stage.addChild(this.start_button);
+        this.start_button.on('click', this.process_start.bind(this));
+    }
+
+    hide_start_button() {
+        this.start_button.visible = false;
+    }
+
+    show_start_button() {
+        this.start_button.visible = true;
     }
 
     create_skip_button() {
@@ -457,14 +493,19 @@ export class Game {
 
     process_queue(data) {
         console.log('process_queue');
-
-        this.queue_status.text = `Players connected: ${data.players_number}; Your number ${data.your_number}; Total players: ${data.total_players_number}\n`;
-        if (data.your_number < data.total_players_number) {
-            this.queue_status.text += 'Wait for other players';
+        this.queue_status.text = `Players connected: ${data.players_number}; Your number ${data.your_number}\n`;
+        if (data.game_started) {
+            this.queue_status.text += 'The game has been already started. Please wait for the end of game\n';
+            this.hide_start_button();
         }
-        if (data.your_number > data.total_players_number) {
-            this.queue_status.text += 'Wait other players to leave';
+        else if (data.players_number < 2) {
+            this.queue_status.text += 'Wait for other players\n';
+            this.hide_start_button();
         }
+        else {
+            this.show_start_button();
+        }
+        this.game_started = data.game_started;
     }
 
 
