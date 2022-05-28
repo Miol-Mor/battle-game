@@ -6,6 +6,7 @@ use crate::api::response::Error;
 
 pub const CMD_CLICK: &str = "click";
 pub const CMD_SKIP_TURN: &str = "skip_turn";
+pub const CMD_START_GAME: &str = "start_game";
 
 #[derive(Serialize, Deserialize, Debug, Message)]
 #[rtype(result = "Option<Error>")]
@@ -22,3 +23,7 @@ impl Click {
 #[derive(Debug, Message)]
 #[rtype(result = "Option<Error>")]
 pub struct SkipTurn;
+
+#[derive(Serialize, Message)]
+#[rtype(result = "Option<Error>")]
+pub struct StartGame;
