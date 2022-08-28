@@ -27,6 +27,8 @@ export class Game {
         this.queue_status = null;
         // info outputted in the top of the screen
         this.info = null;
+        // show info on click or do action
+        this.info_state = false;
         // needed for block players action during moving animation
         this.players_action_enabled = false;
 
@@ -93,6 +95,7 @@ export class Game {
 
     // (needed, because constructor cannot be async)
     async start() {
+        console.log('Is mobile:', PIXI.utils.isMobile.any);
         this.create_stage();
         await this.load_images();
         this.create_socket();
@@ -171,6 +174,22 @@ export class Game {
         this.send_to_backend('skip_turn');
     }
 
+    // // process info button click
+    process_info_click() {
+        this.info_state = !this.info_state;
+        switch (this.info_state) {
+            case true:
+                this.info_button.texture = this.app.loader.resources["info button clicked"].texture;
+                break;
+            case false:
+                this.info_button.texture = this.app.loader.resources["info button"].texture;
+                break;
+            default:
+                throw new Error('Wrong info_state:', this.info_state);
+        }
+        // console.log('info_state:', this.info_state);
+    }
+
     process_start(event) {
         console.log('start game');
         this.socket.send(
@@ -193,6 +212,9 @@ export class Game {
         this.hide_queue_status();
         this.create_info();
         this.create_skip_button();
+        if (PIXI.utils.isMobile.any) {
+            this.create_info_button();
+        }
         this.set_hex_click_handlers();
     }
 
@@ -236,6 +258,8 @@ export class Game {
         this.app.loader.add('white unit', 'images/white unit.png');
         this.app.loader.add('black unit', 'images/black unit.png');
         this.app.loader.add('skip button', 'images/skip button icon.png');
+        this.app.loader.add('info button', 'images/info button icon.png');
+        this.app.loader.add('info button clicked', 'images/info button clicked icon.png');
         this.app.loader.add('start game button', 'images/start button icon.png');
 
         return new Promise(resolve => {
@@ -314,7 +338,7 @@ export class Game {
         this.start_button.visible = false;
 
         this.app.stage.addChild(this.start_button);
-        this.start_button.on('click', this.process_start.bind(this));
+        this.start_button.on('pointerdown', this.process_start.bind(this));
     }
 
     hide_start_button() {
@@ -336,6 +360,19 @@ export class Game {
         this.skip_button.interactive = true;
 
         this.app.stage.addChild(this.skip_button);
+    }
+
+    create_info_button() {
+        this.info_button = new PIXI.Sprite(this.app.loader.resources["info button"].texture);
+        this.info_button.buttonMode = true;
+        this.info_button.anchor.set(0);
+        this.info_button.position.x = 80;
+        this.info_button.position.y = 200;
+        this.info_button.width = 60;
+        this.info_button.height = 60;
+        this.info_button.interactive = true;
+
+        this.app.stage.addChild(this.info_button);
     }
 
     // private
@@ -384,23 +421,33 @@ export class Game {
                 let hex = this.grid.hexes[x][y];
                 hex.interactive = true;
                 hex.hitArea = hex.polygon;
-                hex.on('click', this.process_click.bind(this));
+                hex.on('pointerdown', (event) => {
+                    this.process_mouseover(event);
+                    if (!this.info_state) {
+                        this.process_click(event);
+                    }
+                });
                 hex.on('mouseover', this.process_mouseover.bind(this));
                 hex.on('mouseout', this.process_mouseout.bind(this));
             }
         }
 
-        this.skip_button.on('click', this.process_skip_turn.bind(this));
+        this.skip_button.on('pointerdown', this.process_skip_turn.bind(this));
+        if (PIXI.utils.isMobile.any) {
+            this.info_button.on('pointerdown', this.process_info_click.bind(this));
+        }
     }
 
     // private
     process_mouseover(event) {
         let hex = event.currentTarget;
         this.cur_hex = hex;
-        hex.state_selected = true;
-        hex.fill();
+        if (!PIXI.utils.isMobile.any) {
+            hex.state_selected = true;
+            hex.fill();
+        }
 
-        this.show_tooltip(hex);
+        this.show_tooltip();
     }
 
     // private
