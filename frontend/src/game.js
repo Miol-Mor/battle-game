@@ -235,6 +235,7 @@ export class Game {
         this.app.loader.add('green unit', 'images/green unit.png');
         this.app.loader.add('white unit', 'images/white unit.png');
         this.app.loader.add('black unit', 'images/black unit.png');
+        this.app.loader.add('skip button', 'images/skip button icon.png');
         this.app.loader.add('start game button', 'images/start button icon.png');
 
         return new Promise(resolve => {
@@ -328,8 +329,10 @@ export class Game {
         this.skip_button = new PIXI.Sprite(this.app.loader.resources["skip button"].texture);
         this.skip_button.buttonMode = true;
         this.skip_button.anchor.set(0);
-        this.skip_button.position.x = 0;
-        this.skip_button.position.y = 320;
+        this.skip_button.position.x = 10;
+        this.skip_button.position.y = 200;
+        this.skip_button.width = 60;
+        this.skip_button.height = 60;
         this.skip_button.interactive = true;
 
         this.app.stage.addChild(this.skip_button);
