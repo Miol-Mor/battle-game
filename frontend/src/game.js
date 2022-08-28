@@ -235,7 +235,7 @@ export class Game {
         this.app.loader.add('green unit', 'images/green unit.png');
         this.app.loader.add('white unit', 'images/white unit.png');
         this.app.loader.add('black unit', 'images/black unit.png');
-        this.app.loader.add('skip button', 'images/skip button.png');
+        this.app.loader.add('start game button', 'images/start button icon.png');
 
         return new Promise(resolve => {
             this.app.loader.load(function () {
@@ -304,10 +304,10 @@ export class Game {
     }
 
     create_start_button() {
-        this.start_button = new PIXI.Sprite(this.app.loader.resources["red unit"].texture);
+        this.start_button = new PIXI.Sprite(this.app.loader.resources["start game button"].texture);
         this.start_button.buttonMode = true;
         this.start_button.anchor.set(0);
-        this.start_button.position.x = 100;
+        this.start_button.position.x = 30;
         this.start_button.position.y = 100;
         this.start_button.interactive = true;
         this.start_button.visible = false;
