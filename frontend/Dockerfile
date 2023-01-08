@@ -1,4 +1,4 @@
-FROM node:current-slim
+FROM node:16
 
 WORKDIR /usr/src/frontend
 COPY . .

@@ -12,6 +12,7 @@ services:
       - RUST_LOG=${RUST_LOG:-debug}
     ports:
       - 8088:8088
+
   frontend:
     container_name: frontend
     build:
@@ -19,4 +20,3 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8080:8080
-
