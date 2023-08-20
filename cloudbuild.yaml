@@ -1,0 +1,40 @@
+substitutions:
+  _REGION: europe-central2
+  _REPO: battle-game
+
+steps:
+# Build frontend
+- id: build-frontend
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/frontend', '.']
+  dir: 'frontend'
+
+# Push frontend
+- id: push-frontend
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/frontend']
+  waitFor: ['build-frontend']
+
+# Deploy frontend to Cloud Run
+- id: deploy-frontend
+  name: 'gcr.io/cloud-builders/gcloud'
+  args: ['run', 'deploy', 'frontend-service', '--image', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/frontend', '--region', '$_REGION', '--platform', 'managed']
+  waitFor: ['push-frontend']
+
+# Build backend
+- id: build-backend
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/backend', '.']
+  dir: 'backend'
+
+# Push backend
+- id: push-backend
+  name: 'gcr.io/cloud-builders/docker'
+  args: ['push', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/backend']
+  waitFor: ['build-backend']
+
+# Deploy backend to Cloud Run
+- id: deploy-backend
+  name: 'gcr.io/cloud-builders/gcloud'
+  args: ['run', 'deploy', 'backend-service', '--image', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/backend', '--region', '$_REGION', '--platform', 'managed', '--port', '8088']
+  waitFor: ['push-backend']
