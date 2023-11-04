@@ -16,3 +16,6 @@ yarn.lock
 
 # Webpack
 frontend/dist/main.js
+
+# IDE
+.idea/

@@ -16,7 +16,7 @@ impl Config {
     // Create default config file
     pub fn new() -> Self {
         Config {
-            address: "localhost:8088".to_string(),
+            address: "0.0.0.0:8088".to_string(),
             jwt_expiration: 48,
             jwt_key: "secret_key_change_me".to_string(),
             auth_salt: "hashing_salt_change_me".to_string(),
