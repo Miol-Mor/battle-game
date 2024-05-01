@@ -12,6 +12,7 @@ module.exports = {
     new webpack.DefinePlugin({
       'process.env.WS_ADDRESS': JSON.stringify(process.env.WS_ADDRESS),
       'process.env.WS_PROTOCOL': JSON.stringify(process.env.WS_PROTOCOL),
+      'process.env.WS_PORT': JSON.stringify(process.env.WS_PORT),
     })
   ],
   devServer: {
