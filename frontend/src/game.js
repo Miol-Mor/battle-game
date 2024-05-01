@@ -106,14 +106,12 @@ export class Game {
     // create websocket to receive and send messages
     // private
     create_socket() {
-        for (const [key, value] of Object.entries(process.env)) {
-          console.log(`${key}: ${value}`);
-        }
-
         const wsProtocol = process.env.WS_PROTOCOL || 'ws';
         const wsAddress = process.env.WS_ADDRESS || '127.0.0.1';
-        const wsUrl = `${wsProtocol}://${wsAddress}:8088/ws/`;
+        const wsPort = process.env.WS_PORT || '8088';
+        const wsUrl = `${wsProtocol}://${wsAddress}:${wsPort}/ws/`;
 
+        console.log(`connecting to websocket: ${wsUrl}`);
         this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = function (e) {
