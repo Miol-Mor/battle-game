@@ -6,7 +6,7 @@ steps:
 # Build frontend
 - id: build-frontend
   name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/frontend', '.']
+  args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/frontend', '--build-arg', 'GAME_VERSION=$COMMIT_SHA', '.']
   dir: 'frontend'
 
 # Push frontend
