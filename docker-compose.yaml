@@ -22,5 +22,4 @@ services:
       - 8080:8080
     volumes:
       - ./frontend:/usr/src/frontend
-      - /usr/src/app/node_modules
-
+      - /usr/src/frontend/node_modules
