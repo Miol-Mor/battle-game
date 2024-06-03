@@ -6,6 +6,10 @@ WORKDIR /usr/src/frontend
 COPY package.json yarn.lock ./
 RUN yarn install
 
+# Git commit hash
+ARG GAME_VERSION
+ENV GAME_VERSION=${GAME_VERSION}
+
 # Copy the rest and build
 COPY . .
 RUN yarn build
