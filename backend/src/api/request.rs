@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::common::Point;
 use crate::api::response::Error;
 
+pub const CMD_PING: &str = "ping";
 pub const CMD_CLICK: &str = "click";
 pub const CMD_SKIP_TURN: &str = "skip_turn";
 pub const CMD_START_GAME: &str = "start_game";
