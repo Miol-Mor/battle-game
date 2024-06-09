@@ -114,8 +114,22 @@ export class Game {
         console.log(`connecting to websocket: ${wsUrl}`);
         this.socket = new WebSocket(wsUrl);
 
+        let heartbeatInterval;
+            const startHeartbeat = () => {
+                heartbeatInterval = setInterval(() => {
+                    if (this.socket.readyState === WebSocket.OPEN) {
+                        this.socket.send(JSON.stringify({"cmd": "ping"}));
+                    }
+                }, 15000); // Send ping every 15 seconds
+            };
+
+        const stopHeartbeat = () => {
+            clearInterval(heartbeatInterval);
+        };
+
         this.socket.onopen = function (e) {
             console.log("[open] Connection established");
+            startHeartbeat();
         };
 
         this.socket.onmessage = this.process_message.bind(this);
@@ -128,10 +142,12 @@ export class Game {
                 // event.code is usually 1006 in this case
                 console.log('[close] Connection died');
             }
+            stopHeartbeat();
         };
 
         this.socket.onerror = function (error) {
             console.log(`[error] ${error.message}`);
+            stopHeartbeat();
         };
     }
 

@@ -50,6 +50,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for Websocket {
                     let inner_message = api::inner::Request::new(ctx.address(), message);
                     self.server_addr.do_send(inner_message);
                 }
+                api::request::CMD_PING => {
+                    ctx.pong(b"PONG");
+                }
                 _ => {
                     debug!("Unknown command: {}", message.cmd);
                 }

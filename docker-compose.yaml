@@ -18,6 +18,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - GAME_VERSION=${GAME_VERSION}
     ports:
       - 8080:8080
     volumes:

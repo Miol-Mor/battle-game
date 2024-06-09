@@ -13,6 +13,7 @@ module.exports = {
       'process.env.WS_ADDRESS': JSON.stringify(process.env.WS_ADDRESS),
       'process.env.WS_PROTOCOL': JSON.stringify(process.env.WS_PROTOCOL),
       'process.env.WS_PORT': JSON.stringify(process.env.WS_PORT),
+      'process.env.GAME_VERSION': JSON.stringify(process.env.GAME_VERSION || 'unknown'),
     })
   ],
   devServer: {

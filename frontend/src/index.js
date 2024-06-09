@@ -15,16 +15,12 @@ async function start() {
     window.game = game;
     game.start();
 
-    // inspect all our units
-    // console.log('All units: ');
-    // for (let y = 0; y < game.grid.row_n; y++) {
-    //     for (let x = 0; x < game.grid.col_n; x++) {
-    //         if (game.grid.hexes[y][x].unit) {
-    //             console.log(y, x);
-    //             console.log(game.grid.hexes[y][x].unit.params);
-    //         }
-    //     }
-    // }
+    displayVersion();
+}
 
-    // game.move_unit(1, 3, 5, 0);
+function displayVersion() {
+    const versionText = new PIXI.Text(`Version: ${process.env.GAME_VERSION}`, { fontSize: 12, fill: 'black' });
+    versionText.x = 10;
+    versionText.y = window.innerHeight - 20;
+    window.game.app.stage.addChild(versionText);
 }
